@@ -48,11 +48,12 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
 
   if(!sNameFile1.Length() || !sNameFile2.Length() || !sPath1.Length() || !sPath2.Length())
   {
-    printf("Invalid input\n");
+    printf("Error: Invalid input\n");
     return;
   }
 
   // settings
+  Bool_t bSkipIdentical = 1; // do not make plots for identical histograms
   Bool_t bSave = 1; // save ratios in a file
   Bool_t bCorrelated = 0; // divide combined error by sqrt(2) if both histograms are from the same sample
   Bool_t bCompareWithErr = 0; // for 2D ratios, make a second plot and display ratio also as (ratio - 1)/error_ratio
@@ -219,10 +220,14 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     case 1:
       his1H1 = (TH1D*)his1;
       his2H1 = (TH1D*)his2;
-      if (AreIdentical(his1H1, his2H1))
+      if(AreIdentical(his1H1, his2H1))
       {
-        printf("Histograms %s are identical. No plots needed. ;-)\n", sNameHis.Data());
-        return;
+        printf("Histograms %s are identical.\n", sNameHis.Data());
+        if(bSkipIdentical)
+        {
+          printf("No plots needed. ;-)\n");
+          return;
+        }
       }
 //      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H1->GetTitle(), his1H1->GetName());
       if(!strlen(his1H1->GetTitle()))  // Make sure the histograms don't have empty titles.
@@ -237,10 +242,14 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     case 2:
       his1H2 = (TH2D*)his1;
       his2H2 = (TH2D*)his2;
-      if (AreIdentical(his1H2, his2H2))
+      if(AreIdentical(his1H2, his2H2))
       {
-        printf("Histograms %s are identical. No plots needed. ;-)\n", sNameHis.Data());
-        return;
+        printf("Histograms %s are identical.\n", sNameHis.Data());
+        if(bSkipIdentical)
+        {
+          printf("No plots needed. ;-)\n");
+          return;
+        }
       }
 //      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
       if(!strlen(his1H2->GetTitle()))  // Make sure the histograms don't have empty titles.
@@ -347,10 +356,14 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     case 4:
       his1Hn = (THnSparseD*)his1;
       his2Hn = (THnSparseD*)his2;
-      if (AreIdentical(his1Hn, his2Hn))
+      if(AreIdentical(his1Hn, his2Hn))
       {
-        printf("Histograms %s are identical. No plots needed. ;-)\n", sNameHis.Data());
-        return;
+        printf("Histograms %s are identical.\n", sNameHis.Data());
+        if(bSkipIdentical)
+        {
+          printf("No plots needed. ;-)\n");
+          return;
+        }
       }
       if(!strlen(his1Hn->GetTitle()))  // Make sure the histograms don't have empty titles.
         his1Hn->SetTitle(his1Hn->GetName());
@@ -438,10 +451,14 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     case 5:
       his1R = (RooUnfoldResponse*)his1;
       his2R = (RooUnfoldResponse*)his2;
-      if (AreIdentical(his1R, his2R))
+      if(AreIdentical(his1R, his2R))
       {
-        printf("Objects %s are identical. No plots needed. ;-)\n", sNameHis.Data());
-        return;
+        printf("Objects %s are identical.\n", sNameHis.Data());
+        if(bSkipIdentical)
+        {
+          printf("No plots needed. ;-)\n");
+          return;
+        }
       }
       printf("Objects %s are different. But that is all for now. ;-)\n", sNameHis.Data());
       return;
@@ -782,6 +799,13 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
 
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree)
 {
+  // allowed path structures:
+  // file/his
+  // file/dir/his
+  // file/list/his
+  // file/dir/list/his
+  // file/dir0/.../dirn/his
+
   TString sNameLevel0 = "";
   TString sNameLevel1 = "";
 
@@ -824,8 +848,8 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
   if(sNameLevel0.Length())
   {
     printf("Loading level 0: %s ", sNameLevel0.Data());
-    file->GetObject(sNameLevel0.Data(), dir0);
-    file->GetObject(sNameLevel0.Data(), list0);
+    file->GetObject(sNameLevel0.Data(), dir0); // try file/dir/his or file/dir/list/his
+    file->GetObject(sNameLevel0.Data(), list0); // try file/list/his
     if(!dir0 && !list0)
     {
       printf("failed (Error)\n");
@@ -833,7 +857,7 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
     }
     printf("OK\n");
 
-    if(sNameLevel1.Length())
+    if(sNameLevel1.Length()) // try file/dir/list/his
     {
       printf("Loading level 1: %s ", sNameLevel1.Data());
       if(!dir0)
@@ -848,27 +872,26 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
         return NULL;
       }
       printf("OK\n");
-
     }
   }
 
   printf("Loading histogram %s\n", sNameHis.Data());
-  if(list1)
+  if(list1) // file/dir/list/his
   {
 //    printf("Loading from list\n");
     his = list1->FindObject(sNameHis.Data());
   }
-  else if(list0)
+  else if(list0) // file/list/his
   {
 //    printf("Loading from list\n");
     his = list0->FindObject(sNameHis.Data());
   }
-  else if(dir0)
+  else if(dir0) // file/dir/his
   {
 //    printf("Loading from dir\n");
     his = dir0->Get(sNameHis.Data());
   }
-  else
+  else // file/his
   {
 //    printf("Loading from file\n");
     his = file->Get(sNameHis.Data());
