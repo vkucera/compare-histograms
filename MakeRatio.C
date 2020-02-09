@@ -155,7 +155,8 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     }
   }
 
-  while(!bListInput || (fileList1.good() && (bSameLists || fileList2.good())))
+  Bool_t bStop = kFALSE;
+  while(!bStop && (!bListInput || (fileList1.good() && (bSameLists || fileList2.good()))))
   {
     if(bListInput)
     {
@@ -177,6 +178,8 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
         continue;
       }
     }
+    else // exit the loop if processing a single histogram
+      bStop = kTRUE;
 
     his1 = GetHistogram(file1, sPath1, sNameHis, iDegreeHis1);
     if(!his1)
@@ -206,9 +209,6 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
 
     // make the ratio
     Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
-
-    if (!bListInput)
-      break;
   }
 
   if(bListInput)
