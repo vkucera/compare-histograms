@@ -13,22 +13,14 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "THnSparse.h"
-#include "TF1.h"
-#include "TFitResultPtr.h"
-#include "TFitResult.h"
-#include "TMatrixDSym.h"
 
 #include "TStyle.h"
-#include "TAttMarker.h"
-#include "TAttLine.h"
 #include "TCanvas.h"
 #include "TGraphErrors.h"
-#include "TGraphAsymmErrors.h"
 #include "TMultiGraph.h"
 #include "TLatex.h"
 #include "TLine.h"
 #include "TLegend.h"
-#include "TStopwatch.h"
 
 #include "AuxROOTFunctions.h"
 
