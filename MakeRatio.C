@@ -284,6 +284,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
   switch(iDegree)
   {
     case 1:
+    {
       his1H1 = (TH1D*)his1;
       his2H1 = (TH1D*)his2;
       if(AreIdentical(his1H1, his2H1))
@@ -305,7 +306,9 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         return -1;
       hisRatioH1->SetTitle(his1H1->GetTitle());
       break;
+    }
     case 2:
+    {
       his1H2 = (TH2D*)his1;
       his2H2 = (TH2D*)his2;
       if(AreIdentical(his1H2, his2H2))
@@ -415,11 +418,15 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         }
       }
       break;
+    }
     case 3:
+    {
       printf("Error: TH3 not implemented. Cannot process %s\n", sNameHis.Data());
       return -1;
       break;
+    }
     case 4:
+    {
       his1Hn = (THnSparseD*)his1;
       his2Hn = (THnSparseD*)his2;
       if(AreIdentical(his1Hn, his2Hn))
@@ -514,7 +521,9 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         }
       }
       break;
+    }
     case 5:
+    {
       his1R = (RooUnfoldResponse*)his1;
       his2R = (RooUnfoldResponse*)his2;
       if(AreIdentical(his1R, his2R))
@@ -526,13 +535,28 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
           return 1;
         }
       }
-      printf("Objects %s are different. But that is all for now. ;-)\n", sNameHis.Data());
+      // Run recursively for response histograms.
+      TH1* hFake1 = his1R->Hfakes();
+      TH1* hFake2 = his2R->Hfakes();
+      Run(hFake1, hFake2, sNameHis + "_fakes", 1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      TH1* hMeas1 = his1R->Hmeasured();
+      TH1* hMeas2 = his2R->Hmeasured();
+      Run(hMeas1, hMeas2, sNameHis + "_measured", 1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      TH1* hTruth1 = his1R->Htruth();
+      TH1* hTruth2 = his2R->Htruth();
+      Run(hTruth1, hTruth2, sNameHis + "_truth", 1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      TH2* hResp1 = his1R->Hresponse();
+      TH2* hResp2 = his2R->Hresponse();
+      Run(hResp1, hResp2, sNameHis + "_response", 2, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
       return 0;
       break;
+    }
     default:
+    {
       printf("Error: Not implemented\n");
       return -1;
       break;
+    }
   }
 
   // normalise by number of events
