@@ -28,7 +28,7 @@
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree);
 void AdjustRangeGraph(TGraph* gr, Double_t dMargin = 0.1);
 void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin = 100);
-void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1 = "1", TString sTag2 = "2", TH1D* hisNorm1H1 = 0, TH1D* hisNorm2H1 = 0, TFile* fileOut = 0);
+Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1 = "1", TString sTag2 = "2", TH1D* hisNorm1H1 = 0, TH1D* hisNorm2H1 = 0, TFile* fileOut = 0);
 
 // settings
 Bool_t bSkipIdentical = 1; // do not make plots for identical histograms
@@ -208,7 +208,8 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     }
 
     // make the ratio
-    Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+    Int_t iResult = Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+//    printf("Run returned %d\n", iResult);
   }
 
   if(bListInput)
@@ -224,8 +225,14 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     fileOut->Close();
 }
 
-void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1, TString sTag2, TH1D* hisNorm1H1, TH1D* hisNorm2H1, TFile* fileOut)
+Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1, TString sTag2, TH1D* hisNorm1H1, TH1D* hisNorm2H1, TFile* fileOut)
 {
+  // Make ratios his1/his2 and make plots.
+  // return values:
+  //  0 - Ratios were made successfully.
+  //  1 - Histograms his1 and his2 are identical and no ratios were made.
+  // -1 - Error
+
   // canvases
   TCanvas* canRatio = 0;
   TCanvas* canRatio2D = 0;
@@ -285,7 +292,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
         if(bSkipIdentical)
         {
           printf("No plots needed. ;-)\n");
-          return;
+          return 1;
         }
       }
 //      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H1->GetTitle(), his1H1->GetName());
@@ -295,7 +302,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
         OptimizeBinningTwo(&his1H1, &his2H1, dNMin);
       hisRatioH1 = DivideHistograms1D(his1H1, his2H1);
       if(!hisRatioH1)
-        return;
+        return -1;
       hisRatioH1->SetTitle(his1H1->GetTitle());
       break;
     case 2:
@@ -307,7 +314,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
         if(bSkipIdentical)
         {
           printf("No plots needed. ;-)\n");
-          return;
+          return 1;
         }
       }
 //      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
@@ -316,7 +323,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
 //      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
       hisRatioH2 = DivideHistograms2D(his1H2, his2H2);
       if(!hisRatioH2)
-        return;
+        return -1;
       hisRatioH2->SetTitle(his1H2->GetTitle());
       // projections, 0 - y, 1 - x
       for(Int_t iAx = 0; iAx < 2; iAx++)
@@ -378,7 +385,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
               (vecHis[1]).push_back(his2H1);
               hisRatioH1 = DivideHistograms1D(his1H1, his2H1);
               if(!hisRatioH1)
-                return;
+                return -1;
               hisRatioH1->SetTitle(Form("%s_P%d_A%d_S%d: %s %g - %g", his1H1->GetTitle(), iAx, iAx2, iSlice, sTitleAxis.Data(), dSliceMin, dSliceMax));
               vecRatio.push_back(hisRatioH1);
             }
@@ -402,7 +409,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
           (vecHis[1]).push_back(his2H1);
           hisRatioH1 = DivideHistograms1D(his1H1, his2H1);
           if(!hisRatioH1)
-            return;
+            return -1;
           hisRatioH1->SetTitle(Form("%s_P%d", his1H1->GetTitle(), iAx));
           vecRatio.push_back(hisRatioH1);
         }
@@ -410,7 +417,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
       break;
     case 3:
       printf("Error: TH3 not implemented. Cannot process %s\n", sNameHis.Data());
-      return;
+      return -1;
       break;
     case 4:
       his1Hn = (THnSparseD*)his1;
@@ -421,7 +428,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
         if(bSkipIdentical)
         {
           printf("No plots needed. ;-)\n");
-          return;
+          return 1;
         }
       }
       if(!strlen(his1Hn->GetTitle()))  // Make sure the histograms don't have empty titles.
@@ -431,7 +438,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
       if(iNDim1 != iNDim2)
       {
         printf("Error: Different dimensions\n");
-        return;
+        return -1;
       }
       for(Int_t iAx = 0; iAx < iNDim1; iAx++)
       {
@@ -483,7 +490,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
               (vecHis[1]).push_back(his2H1);
               hisRatioH1 = DivideHistograms1D(his1H1, his2H1);
               if(!hisRatioH1)
-                return;
+                return -1;
               hisRatioH1->SetTitle(Form("%s_P%d_A%d_S%d: %s %g - %g", his1H1->GetTitle(), iAx, iAx2, iSlice, sTitleAxis.Data(), dSliceMin, dSliceMax));
               vecRatio.push_back(hisRatioH1);
             }
@@ -501,7 +508,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
           (vecHis[1]).push_back(his2H1);
           hisRatioH1 = DivideHistograms1D(his1H1, his2H1);
           if(!hisRatioH1)
-            return;
+            return -1;
           hisRatioH1->SetTitle(Form("%s_P%d", his1H1->GetTitle(), iAx));
           vecRatio.push_back(hisRatioH1);
         }
@@ -516,15 +523,15 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
         if(bSkipIdentical)
         {
           printf("No plots needed. ;-)\n");
-          return;
+          return 1;
         }
       }
       printf("Objects %s are different. But that is all for now. ;-)\n", sNameHis.Data());
-      return;
+      return 0;
       break;
     default:
       printf("Error: Not implemented\n");
-      return;
+      return -1;
       break;
   }
 
@@ -550,7 +557,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
     if(dRatioNorm == dInf || dNorm1 <= 0 || dNorm2 <= 0)
     {
       printf("Error: Wrong normalisation\n");
-      return;
+      return -1;
     }
     printf("Scaling with normalization factor: %g\n", dRatioNorm);
     switch(iDegree)
@@ -849,6 +856,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
     default:
       break;
   }
+  return 0;
 }
 
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree)
