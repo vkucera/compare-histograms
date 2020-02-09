@@ -35,6 +35,23 @@
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree);
 void AdjustRangeGraph(TGraph* gr, Double_t dMargin = 0.1);
 void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin = 100);
+void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1 = "1", TString sTag2 = "2", TH1D* hisNorm1H1 = 0, TH1D* hisNorm2H1 = 0, TFile* fileOut = 0);
+
+// settings
+Bool_t bSkipIdentical = 1; // do not make plots for identical histograms
+Bool_t bSave = 1; // save ratios in a file
+Bool_t bCorrelated = 0; // divide combined error by sqrt(2) if both histograms are from the same sample
+Bool_t bCompareWithErr = 0; // for 2D ratios, make a second plot and display ratio also as (ratio - 1)/error_ratio
+Bool_t bTHnSlices = 0; // make all projections in slices of others axes
+Int_t iNTHnSlices = 4; //24; // number of slices for each axis
+Bool_t bRestrict = 0; // restrict range of y-axis (and z-axis for 2D) manually, using dRatioMin and dRatioMax
+Bool_t bRestrictAuto = 1; // restrict range of y-axis (and z-axis for 2D) automatically
+Double_t dRatioMin = 0.9; // minimum of y-axis (and z-axis for 2D)
+Double_t dRatioMax = 1.3; // maximum of y-axis (and z-axis for 2D)
+Bool_t bOptimizeBinning = 0; // rebin histograms so that there are at least dNMin entries in each bin in the not empty range
+Double_t dNMin = 200; // minimum number of entries in each filled bin after rebinning (default 100)
+Bool_t bBinWidth = 0; // divide 1D histograms by bin width for preserving shapes of plotted distributions
+Bool_t bDrawOverlap = 1; // divide canvas and plot the overlap of histograms in the upper half and their ratio in the lower half
 
 // axis: m_V0; pt_V0; eta_V0; pt_jet
 Int_t iAxesSkipProj[] = { -1}; // list of axes to skip when making projection
@@ -52,90 +69,25 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     return;
   }
 
-  // settings
-  Bool_t bSkipIdentical = 1; // do not make plots for identical histograms
-  Bool_t bSave = 1; // save ratios in a file
-  Bool_t bCorrelated = 0; // divide combined error by sqrt(2) if both histograms are from the same sample
-  Bool_t bCompareWithErr = 0; // for 2D ratios, make a second plot and display ratio also as (ratio - 1)/error_ratio
-  Bool_t bTHnSlices = 0; // make all projections in slices of others axes
-  Int_t iNTHnSlices = 4; //24; // number of slices for each axis
-  Bool_t bRestrict = 0; // restrict range of y-axis (and z-axis for 2D) manually, using dRatioMin and dRatioMax
-  Bool_t bRestrictAuto = 1; // restrict range of y-axis (and z-axis for 2D) automatically
-  Double_t dRatioMin = 0.9; // minimum of y-axis (and z-axis for 2D)
-  Double_t dRatioMax = 1.3; // maximum of y-axis (and z-axis for 2D)
-  Bool_t bOptimizeBinning = 0; // rebin histograms so that there are at least dNMin entries in each bin in the not empty range
-  Double_t dNMin = 200; // minimum number of entries in each filled bin after rebinning (default 100)
-  Bool_t bBinWidth = 0; // divide 1D histograms by bin width for preserving shapes of plotted distributions
-  Bool_t bDrawOverlap = 1; // divide canvas and plot the overlap of histograms in the upper half and their ratio in the lower half
-
-  // canvases
-  TCanvas* canRatio = 0;
-  TCanvas* canRatio2D = 0;
-  TCanvas* canRatioDev = 0;
-  Int_t iCanHeight = 600;
-  Int_t iCanWidth = 800;
-  TString sNameCan = "Ratio";
-  TString kImageSuf = "png";
-//  kImageSuf = "eps";
-  TLegend* legend = 0;
-  Double_t legx1 = 0.8, legy1 = 0.7, legx2 = 0.9, legy2 = 0.9;
-  Double_t dFontSizeLeg = 0.05;
-  Double_t dFontSizeAxis = 0.05;
-  TLine* lineOne = 0;
-  TPad* pad = 0;
-  Double_t padx1 = 0., pady1 = 0., padx2 = 0.95, pady2 = 0.95, padymid = 0.5;
-
-  // graphs
-  TGraphErrors* grRatio = 0;
-  TGraphErrors* grHis1 = 0;
-  TGraphErrors* grHis2 = 0;
-  TMultiGraph* mgrHis = 0;
-
-  // names
-  TString sTitle = "";
-  TString sTitleAxis = "";
-  TString sLabelRatio = "ratio";
-  TString sLabelRatioDev = "(ratio #minus 1)/#it{#sigma}_{ratio}";
-  TString sNameFileOut = "Ratios.root";
-  TString sNameLevel0 = "";
-  TString sNameLevel1 = "";
-  TString sNameHis = "";
-  TString sNameHisNorm = "";
-
-  sLabelRatio += Form(" %s/%s", sTag1.Data(), sTag2.Data());
-
   // input
   TFile* file1 = 0;
   TFile* file2 = 0;
   TFile* fileOut = 0;
   TObject* his1 = 0;
   TObject* his2 = 0;
+  // normalisation histograms
+  TH1D* hisNorm1H1 = 0;
+  TH1D* hisNorm2H1 = 0;
+
+  TString sNameFileOut = "Ratios.root";
+  TString sNameHis = "";
+  TString sNameHisNorm = "";
 
   // histogram dimensions: 1 - TH1, 2 - TH2, 3 - TH3, 4 - THnSparse
   Int_t iDegreeHis1 = 1;
   Int_t iDegreeHis2 = 1;
   Int_t iDegreeHisNorm1 = 1;
   Int_t iDegreeHisNorm2 = 1;
-  // loaded histograms
-  TH1D* his1H1 = 0;
-  TH1D* his2H1 = 0;
-  TH2D* his1H2 = 0;
-  TH2D* his2H2 = 0;
-  THnSparseD* his1Hn = 0;
-  THnSparseD* his2Hn = 0;
-  RooUnfoldResponse* his1R = 0;
-  RooUnfoldResponse* his2R = 0;
-  Int_t iNDim1 = 0;
-  Int_t iNDim2 = 0;
-  std::vector<TH1D*> vecHis[2];
-  // normalisation histogram
-  TH1D* hisNorm1H1 = 0;
-  TH1D* hisNorm2H1 = 0;
-  // ratios
-  TH1D* hisRatioH1 = 0;
-  TH2D* hisRatioH2 = 0;
-  TH2D* hisRatioH2Dev = 0;
-  std::vector<TH1D*> vecRatio;
 
   printf("Opening file 1 %s ", sNameFile1.Data());
   file1 = new TFile(sNameFile1.Data(), "READ");
@@ -210,8 +162,68 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     }
   }
 
+
   // make the ratio
-  switch(iDegreeHis1)
+  Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+
+
+  file1->Close();
+  file2->Close();
+  if(bSave)
+    fileOut->Close();
+}
+
+void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1, TString sTag2, TH1D* hisNorm1H1, TH1D* hisNorm2H1, TFile* fileOut)
+{
+  // canvases
+  TCanvas* canRatio = 0;
+  TCanvas* canRatio2D = 0;
+  TCanvas* canRatioDev = 0;
+  Int_t iCanHeight = 600;
+  Int_t iCanWidth = 800;
+  TString sNameCan = "Ratio";
+  TString kImageSuf = "png";
+//  kImageSuf = "eps";
+  TLegend* legend = 0;
+  Double_t legx1 = 0.8, legy1 = 0.7, legx2 = 0.9, legy2 = 0.9;
+  Double_t dFontSizeLeg = 0.05;
+  Double_t dFontSizeAxis = 0.05;
+  TLine* lineOne = 0;
+  TPad* pad = 0;
+  Double_t padx1 = 0., pady1 = 0., padx2 = 0.95, pady2 = 0.95, padymid = 0.5;
+
+  // graphs
+  TGraphErrors* grRatio = 0;
+  TGraphErrors* grHis1 = 0;
+  TGraphErrors* grHis2 = 0;
+  TMultiGraph* mgrHis = 0;
+
+  // names
+  TString sTitle = "";
+  TString sTitleAxis = "";
+  TString sLabelRatio = "ratio";
+  TString sLabelRatioDev = "(ratio #minus 1)/#it{#sigma}_{ratio}";
+  sLabelRatio += Form(" %s/%s", sTag1.Data(), sTag2.Data());
+
+  // loaded histograms
+  TH1D* his1H1 = 0;
+  TH1D* his2H1 = 0;
+  TH2D* his1H2 = 0;
+  TH2D* his2H2 = 0;
+  THnSparseD* his1Hn = 0;
+  THnSparseD* his2Hn = 0;
+  RooUnfoldResponse* his1R = 0;
+  RooUnfoldResponse* his2R = 0;
+  Int_t iNDim1 = 0;
+  Int_t iNDim2 = 0;
+  std::vector<TH1D*> vecHis[2];
+  // ratios
+  TH1D* hisRatioH1 = 0;
+  TH2D* hisRatioH2 = 0;
+  TH2D* hisRatioH2Dev = 0;
+  std::vector<TH1D*> vecRatio;
+
+  switch(iDegree)
   {
     case 1:
       his1H1 = (TH1D*)his1;
@@ -490,7 +502,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
       return;
     }
     printf("Scaling with normalization factor: %g\n", dRatioNorm);
-    switch(iDegreeHis1)
+    switch(iDegree)
     {
       case 1:
         his1H1->Scale(1. / dNorm1);
@@ -518,7 +530,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   // divide by bin width for preserving shapes of plotted distributions
   if(bBinWidth)
   {
-    switch(iDegreeHis1)
+    switch(iDegree)
     {
       case 1:
         his1H1->Scale(1., "width");
@@ -543,7 +555,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   // correct back for the combination of correlated errors.
   if(bCorrelated)
   {
-    switch(iDegreeHis1)
+    switch(iDegree)
     {
       case 1:
         for(Int_t iX = 1; iX <= hisRatioH1->GetXaxis()->GetNbins(); iX++)
@@ -569,7 +581,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   }
 
   // display ratio in 2D as (ratio - 1)/error_ratio
-  if(bCompareWithErr && iDegreeHis1 == 2)
+  if(bCompareWithErr && iDegree == 2)
   {
     hisRatioH2Dev = (TH2D*)hisRatioH2->Clone();
     hisRatioH2Dev->Reset();
@@ -597,7 +609,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   if(bSave)
   {
     fileOut->cd();
-    switch(iDegreeHis1)
+    switch(iDegree)
     {
       case 1:
         hisRatioH1->Write(sNameHis.Data());
@@ -618,7 +630,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
 
   // plot
   sTitle = sNameHis;
-  switch(iDegreeHis1)
+  switch(iDegree)
   {
     case 1:
       canRatio = new TCanvas(sNameCan.Data(), "", iCanWidth, (bDrawOverlap ? 1.5 : 1.0) * iCanHeight);
@@ -786,11 +798,6 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     default:
       break;
   }
-
-  file1->Close();
-  file2->Close();
-  if(bSave)
-    fileOut->Close();
 }
 
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree)
