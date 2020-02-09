@@ -108,10 +108,6 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   TFile* file1 = 0;
   TFile* file2 = 0;
   TFile* fileOut = 0;
-  TDirectoryFile* dir1 = 0;
-  TDirectoryFile* dir2 = 0;
-  TList* list1 = 0;
-  TList* list2 = 0;
   TObject* his1 = 0;
   TObject* his2 = 0;
 
@@ -810,7 +806,6 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
   TString sNameLevel1 = "";
 
   TDirectoryFile* dir0 = 0;
-  TDirectoryFile* dir1 = 0;
   TList* list0 = 0;
   TList* list1 = 0;
   TObject* his = 0;
@@ -824,82 +819,95 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
     delete arrayPath;
     return NULL;
   }
-  if(iNParts > 3)
-  {
-    printf("Error: Too many levels.\n");
-    delete arrayPath;
-    return NULL;
-  }
   sNameHis = ((TObjString*)(arrayPath->At(iNParts - 1)))->GetString();
-  if(iNParts > 1)
+
+  // try the simple way first
+  // expect file/his or file/dir0/.../dirn/his
+  printf("Loading object %s from %s\n", sNameHis.Data(), sPath.Data());
+  his = file->Get(sPath.Data());
+
+  if(his)
   {
-    sNameLevel0 = ((TObjString*)(arrayPath->At(0)))->GetString();
-    if(iNParts == 3)
-      sNameLevel1 = ((TObjString*)(arrayPath->At(1)))->GetString();
+    delete arrayPath;
   }
-  delete arrayPath;
-
-  TString sFullPath = "";
-  sFullPath += (sNameLevel0.Length() ? sNameLevel0 + "/" : "");
-  sFullPath += (sNameLevel1.Length() ? sNameLevel1 + "/" : "");
-  sFullPath += sNameHis;
-  printf("Full path: %s\n", sFullPath.Data());
-
-  if(sNameLevel0.Length())
+  else // try the complicated way
   {
-    printf("Loading level 0: %s ", sNameLevel0.Data());
-    file->GetObject(sNameLevel0.Data(), dir0); // try file/dir/his or file/dir/list/his
-    file->GetObject(sNameLevel0.Data(), list0); // try file/list/his
-    if(!dir0 && !list0)
+    if(iNParts > 3)
     {
-      printf("failed (Error)\n");
+      printf("Error: Too many levels.\n");
+      delete arrayPath;
       return NULL;
     }
-    printf("OK\n");
-
-    if(sNameLevel1.Length()) // try file/dir/list/his
+    if(iNParts > 1)
     {
-      printf("Loading level 1: %s ", sNameLevel1.Data());
-      if(!dir0)
+      sNameLevel0 = ((TObjString*)(arrayPath->At(0)))->GetString();
+      if(iNParts == 3)
+        sNameLevel1 = ((TObjString*)(arrayPath->At(1)))->GetString();
+    }
+    delete arrayPath;
+
+    TString sFullPath = "";
+    sFullPath += (sNameLevel0.Length() ? sNameLevel0 + "/" : "");
+    sFullPath += (sNameLevel1.Length() ? sNameLevel1 + "/" : "");
+    sFullPath += sNameHis;
+    printf("Interpreted path: %s\n", sFullPath.Data());
+
+    if(sNameLevel0.Length())
+    {
+      printf("Loading level 0: %s ", sNameLevel0.Data());
+      file->GetObject(sNameLevel0.Data(), dir0); // try file/dir/his or file/dir/list/his
+      file->GetObject(sNameLevel0.Data(), list0); // try file/list/his
+      if(!dir0 && !list0)
       {
-        printf("failed, dir0 not found (Error)\n");
-        return NULL;
-      }
-      dir0->GetObject(sNameLevel1.Data(), list1);
-      if(!list1)
-      {
-        printf("failed, list not found (Error)\n");
+        printf("failed (Error)\n");
         return NULL;
       }
       printf("OK\n");
-    }
-  }
 
-  printf("Loading histogram %s\n", sNameHis.Data());
-  if(list1) // file/dir/list/his
-  {
+      if(sNameLevel1.Length()) // expect file/dir/list/his
+      {
+        printf("Loading level 1: %s ", sNameLevel1.Data());
+        if(!dir0)
+        {
+          printf("failed, dir0 not found (Error)\n");
+          return NULL;
+        }
+        dir0->GetObject(sNameLevel1.Data(), list1);
+        if(!list1)
+        {
+          printf("failed, list not found (Error)\n");
+          return NULL;
+        }
+        printf("OK\n");
+      }
+    }
+
+//    printf("Loading histogram %s\n", sNameHis.Data());
+    if(list1) // file/dir/list/his
+    {
 //    printf("Loading from list\n");
-    his = list1->FindObject(sNameHis.Data());
-  }
-  else if(list0) // file/list/his
-  {
+      his = list1->FindObject(sNameHis.Data());
+    }
+    else if(list0) // file/list/his
+    {
 //    printf("Loading from list\n");
-    his = list0->FindObject(sNameHis.Data());
-  }
-  else if(dir0) // file/dir/his
-  {
+      his = list0->FindObject(sNameHis.Data());
+    }
+    else if(dir0) // file/dir/his (this should be handled by the simple way)
+    {
 //    printf("Loading from dir\n");
-    his = dir0->Get(sNameHis.Data());
-  }
-  else // file/his
-  {
+      his = dir0->Get(sNameHis.Data());
+    }
+    else // file/his (this should be handled by the simple way)
+    {
 //    printf("Loading from file\n");
-    his = file->Get(sNameHis.Data());
+      his = file->Get(sNameHis.Data());
+    }
   }
 
   if(!his)
   {
-    printf("Error: Failed to load histogram %s\n", sNameHis.Data());
+    printf("Error: Failed to load object %s\n", sNameHis.Data());
     return NULL;
   }
 
@@ -916,7 +924,7 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
     iDegree = 1;
   else
   {
-    printf("Error: Object %s is not a histogram!\n", sNameHis.Data());
+    printf("Error: Object %s is not histogram-like!\n", sNameHis.Data());
     iDegree = 0;
   }
 
@@ -957,7 +965,8 @@ void AdjustRangeGraph(TGraph* gr, Double_t dMargin)
 
 void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin)
 {
-  Bool_t bTwice = 1;
+  // optimise binning of phis1 and rebin phis2 accordingly
+  Bool_t bTwice = 1; // optimise binning of his2 after rebinning as well and rebin phis1 accordingly
   TH1D* his1 = *phis1;
   TH1D* his2 = *phis2;
   his1 = OptimizeBinning(his1, dNMin);
