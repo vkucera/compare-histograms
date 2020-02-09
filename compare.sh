@@ -4,15 +4,15 @@
 skipString="#"
 
 # files
-file1="$(readlink -f $1)"
-file2="$(readlink -f $2)"
+file1="$(readlink -f "$1")"
+file2="$(readlink -f "$2")"
 
 # tags
 tag1=$3
 tag2=$4
 
 # path to lists of histograms
-pathList="/home/vkucera/HFjets/compare/lists"
+pathList="/home/vkucera/HFjets/code/compare/lists"
 #pathList=`pwd`
 lists=( \
 effhisto \
@@ -74,7 +74,7 @@ path2="$dir2$his"
 pathNorm1="$dirNorm1$hisNorm"
 pathNorm2="$dirNorm2$hisNorm"
 #root -b -q /home/vkucera/HFjets/compare/compileAndRunMakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
-root -b -q /home/vkucera/HFjets/compare/MakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
+root -b -q /home/vkucera/HFjets/code/compare/MakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
 done
 cd ..
 #done
