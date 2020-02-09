@@ -62,22 +62,26 @@ echo "Processing list $list"
 mkdir -p "$list"
 cd "$list"
 rm -f Ratios.root
-for his in $(cat $pathList/$list.txt)
-do
-if [ "${his:0:1}" = "$skipString" ]
-then
-echo "Skipping $his"
-continue
-fi
+#for his in $(cat $pathList/$list.txt)
+#do
+#if [ "${his:0:1}" = "$skipString" ]
+#then
+#echo "Skipping $his"
+#continue
+#fi
 path1="$dir1$his"
 path2="$dir2$his"
 pathNorm1="$dirNorm1$hisNorm"
 pathNorm2="$dirNorm2$hisNorm"
 #root -b -q /home/vkucera/HFjets/compare/compileAndRunMakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
-root -b -q /home/vkucera/HFjets/code/compare/MakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
-done
-cd ..
+#root -b -q /home/vkucera/HFjets/code/compare/MakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
 #done
+#cd ..
+#done
+
+path1="$pathList/$list.txt"
+path2="$path1"
+root -b -q /home/vkucera/HFjets/code/compare/MakeRatio.C\(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\"\)
 date +%Y-%m-%d_%H-%M-%S
 exit 0
 

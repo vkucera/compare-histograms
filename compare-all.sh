@@ -15,12 +15,22 @@ base_real2="/data/DerivedResultsJets/LckINT7HighMultwithJets/vAN-20190909_ROOT6-
 #base_real2="/data/DerivedResultsJets/LckINT7HighMultwithJets/vAN-20190909_ROOT6-1-bkp_cleandb/pp_data/resultsMBjetvspt"
 
 # array of file names
-files_real=( "feeddownLcpK0sppMBjetvspt.root" )
-#files_real=( "masshisto.root" "sideband_subLcpK0sppMBjetvspt.root" "feeddownLcpK0sppMBjetvspt.root" "unfolding_resultsLcpK0sppMBjetvspt.root" "unfolding_closure_resultsLcpK0sppMBjetvspt.root" )
+files_real=( \
+"masshisto.root" \
+"sideband_subLcpK0sppMBjetvspt.root" \
+"feeddownLcpK0sppMBjetvspt.root" \
+"unfolding_resultsLcpK0sppMBjetvspt.root" \
+"unfolding_closure_resultsLcpK0sppMBjetvspt.root" \
+)
 
 # array of list names for respective files
-lists_real=( "feeddown" )
-
+lists_real=( \
+"masshisto_real" \
+"sideband_sub" \
+"feeddown" \
+"unfolding_results" \
+"unfolding_closure_results" \
+)
 
 #### MC data ####
 
@@ -34,10 +44,18 @@ base_sim2="/data/DerivedResultsJets/LckINT7HighMultwithJets/vAN-20190909_ROOT6-1
 #base_sim2="/data/DerivedResultsJets/LckINT7HighMultwithJets/vAN-20190909_ROOT6-1-bkp_cleandb/pp_mc_prodLcpK0s/resultsMBjetvspt"
 
 # array of file names
-files_sim=( "masshisto.root" "effhisto.root" "efficienciesLcpK0sppMBjetvspt.root" )
+files_sim=( \
+"masshisto.root" \
+"effhisto.root" \
+"efficienciesLcpK0sppMBjetvspt.root" \
+)
 
 # array of list names for respective files
-lists_sim=( "masshisto_sim" "effhisto" "efficiencies" )
+lists_sim=( \
+"masshisto_sim" \
+"effhisto" \
+"efficiencies" \
+)
 
 
 # Labels to identify histograms on the plots
@@ -64,25 +82,26 @@ function do_compare {
     $script "$dir1/$file" "$dir2/$file" "$label1" "$label2" "$list" > "$log_file" 2>&1
     n_id=$(grep -c identical $log_file) # number of identical histograms
     n_tot=$(grep -v '#' $pathList/$list.txt | wc -l) # number of histograms that should be processed
-    n_proc=$(grep -c MakeRatio $log_file) # number of actually processed histograms
-    echo "Identical histograms: $n_id/$n_tot, processed: $n_proc"
+    echo "Identical histograms: $n_id/$n_tot"
     echo "Errors:"
     grep -i error $log_file
   done
 }
 
 
+date +%H:%M:%S
 echo "Comparing real data directories:"
 mkdir -p "real"
 cd "real"
 do_compare $base_real1 $base_real2 files_real lists_real
 cd ..
 
-#echo "Comparing MC data directories:"
-#mkdir -p "sim"
-#cd "sim"
-#do_compare $base_sim1 $base_sim2 files_sim lists_sim
-#cd ..
+echo "Comparing MC data directories:"
+mkdir -p "sim"
+cd "sim"
+do_compare $base_sim1 $base_sim2 files_sim lists_sim
+cd ..
+date +%H:%M:%S
 
 exit 0
 

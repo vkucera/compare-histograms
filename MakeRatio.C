@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 #include "TROOT.h"
 #include "TSystem.h"
@@ -65,21 +66,23 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   TFile* file1 = 0;
   TFile* file2 = 0;
   TFile* fileOut = 0;
+  ifstream fileList1; // txt file with a list of histogram paths
+  ifstream fileList2; // txt file with a list of histogram paths
   TObject* his1 = 0;
   TObject* his2 = 0;
   // normalisation histograms
   TH1D* hisNorm1H1 = 0;
   TH1D* hisNorm2H1 = 0;
-
-  TString sNameFileOut = "Ratios.root";
-  TString sNameHis = "";
-  TString sNameHisNorm = "";
-
   // histogram dimensions: 1 - TH1, 2 - TH2, 3 - TH3, 4 - THnSparse
   Int_t iDegreeHis1 = 1;
   Int_t iDegreeHis2 = 1;
   Int_t iDegreeHisNorm1 = 1;
   Int_t iDegreeHisNorm2 = 1;
+
+  TString sNameFileOut = "Ratios.root";
+  TString sNameHis = "";
+  TString sNameHisNorm = "";
+  TString sSkipString = "#"; // string to mark histograms in a list to be skipped
 
   printf("Opening file 1 %s ", sNameFile1.Data());
   file1 = new TFile(sNameFile1.Data(), "READ");
@@ -111,32 +114,6 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     printf("OK\n");
   }
 
-  his1 = GetHistogram(file1, sPath1, sNameHis, iDegreeHis1);
-  if(!his1)
-  {
-//    printf("Error: Failed to load histogram 1 %s\n", sNameHis.Data());
-    return;
-  }
-
-  his2 = GetHistogram(file2, sPath2, sNameHis, iDegreeHis2);
-  if(!his2)
-  {
-//    printf("Error: Failed to load histogram 2 %s\n", sNameHis.Data());
-    return;
-  }
-
-  if(iDegreeHis1 != iDegreeHis2)
-  {
-    printf("Histograms have different degrees: %d %d\n", iDegreeHis1, iDegreeHis2);
-    return;
-  }
-
-  if(iDegreeHis1 == 0)
-  {
-    printf("Error: Not a histogram\n");
-    return;
-  }
-
   if(sPathNorm1.Length())
   {
     hisNorm1H1 = (TH1D*)GetHistogram(file1, sPathNorm1, sNameHisNorm, iDegreeHisNorm1);
@@ -154,10 +131,92 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     }
   }
 
+  Bool_t bListInput = kFALSE; // input paths point to list files
+  Bool_t bSameLists = kFALSE; // both input paths point to the same list file
+  if(sPath1.EndsWith(".txt") && sPath2.EndsWith(".txt"))
+  {
+    bListInput = kTRUE;
+    fileList1.open(sPath1.Data());
+    if(!fileList1.good())
+    {
+      printf("Error: Failed to open file %s\n", sPath1.Data());
+      return;
+    }
+    if(sPath1.EqualTo(sPath2))
+      bSameLists = kTRUE;
+    else
+    {
+      fileList2.open(sPath2.Data());
+      if(!fileList2.good())
+      {
+        printf("Error: Failed to open file %s\n", sPath2.Data());
+        return;
+      }
+    }
+  }
 
-  // make the ratio
-  Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+  while(!bListInput || (fileList1.good() && (bSameLists || fileList2.good())))
+  {
+    if(bListInput)
+    {
+      fileList1 >> sPath1;
+      if(!bSameLists)
+        fileList2 >> sPath2;
+      else
+        sPath2 = sPath1;
+      if(!sPath1.Length() || !sPath2.Length())
+        continue;
+      if(sPath1.BeginsWith(sSkipString.Data()))
+      {
+        printf("Skipping %s\n", sPath1.Data());
+        continue;
+      }
+      if(!bSameLists && sPath2.BeginsWith(sSkipString.Data()))
+      {
+        printf("Skipping %s\n", sPath2.Data());
+        continue;
+      }
+    }
 
+    his1 = GetHistogram(file1, sPath1, sNameHis, iDegreeHis1);
+    if(!his1)
+    {
+//    printf("Error: Failed to load histogram 1 %s\n", sNameHis.Data());
+      continue;
+    }
+
+    his2 = GetHistogram(file2, sPath2, sNameHis, iDegreeHis2);
+    if(!his2)
+    {
+//    printf("Error: Failed to load histogram 2 %s\n", sNameHis.Data());
+      continue;
+    }
+
+    if(iDegreeHis1 != iDegreeHis2)
+    {
+      printf("Histograms have different degrees: %d %d\n", iDegreeHis1, iDegreeHis2);
+      continue;
+    }
+
+    if(iDegreeHis1 == 0)
+    {
+      printf("Error: Not a histogram\n");
+      continue;
+    }
+
+    // make the ratio
+    Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+
+    if (!bListInput)
+      break;
+  }
+
+  if(bListInput)
+  {
+    fileList1.close();
+    if(!bSameLists)
+      fileList2.close();
+  }
 
   file1->Close();
   file2->Close();
@@ -350,7 +409,7 @@ void Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString 
       }
       break;
     case 3:
-      printf("Error: TH3 not implemented\n");
+      printf("Error: TH3 not implemented. Cannot process %s\n", sNameHis.Data());
       return;
       break;
     case 4:
