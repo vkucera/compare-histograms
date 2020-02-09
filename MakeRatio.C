@@ -74,7 +74,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   TCanvas* canRatioDev = 0;
   Int_t iCanHeight = 600;
   Int_t iCanWidth = 800;
-  TString sNameCan = "canRatio";
+  TString sNameCan = "Ratio";
   TString kImageSuf = "png";
 //  kImageSuf = "eps";
   TLegend* legend = 0;
@@ -672,7 +672,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
         lineOne = new TLine(hisRatioH1->GetXaxis()->GetXmin(), 1, hisRatioH1->GetXaxis()->GetXmax(), 1);
         lineOne->Draw();
       }
-      canRatio->SaveAs(Form("%s%s.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
+      canRatio->SaveAs(Form("%s_%s.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
       delete hisRatioH1;
       delete grRatio;
       if(bDrawOverlap)
@@ -707,12 +707,12 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
         hisRatioH2Dev->SetTitle(Form("%s;%s;%s;%s", sTitle.Data(), his1H2->GetXaxis()->GetTitle(), his1H2->GetYaxis()->GetTitle(), sLabelRatioDev.Data()));
         canRatioDev->SetRightMargin(0.2);
         hisRatioH2Dev->Draw("colz");
-//        canRatioDev->SaveAs(Form("%s%s-Dev.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
+//        canRatioDev->SaveAs(Form("%s_%s-Dev.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
         canRatio2D->cd(4);
         hisRatioH2Dev->Draw("colz");
         delete canRatioDev;
       }
-      canRatio2D->SaveAs(Form("%s%s.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
+      canRatio2D->SaveAs(Form("%s_%s.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
       delete hisRatioH2;
       if(hisRatioH2Dev)
         delete hisRatioH2Dev;
@@ -772,7 +772,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
           lineOne = new TLine(vecRatio[iAx]->GetXaxis()->GetXmin(), 1, vecRatio[iAx]->GetXaxis()->GetXmax(), 1);
           lineOne->Draw();
         }
-        canRatio->SaveAs(Form("%s%s_%s%d.%s", sNameCan.Data(), sNameHis.Data(), (bTHnSlices ? "S" : ""), iAx, kImageSuf.Data()));
+        canRatio->SaveAs(Form("%s_%s_%s%d.%s", sNameCan.Data(), sNameHis.Data(), (bTHnSlices ? "S" : ""), iAx, kImageSuf.Data()));
         delete grRatio;
         if(bDrawOverlap)
         {
