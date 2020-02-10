@@ -294,19 +294,13 @@ Double_t MultiplyNumbersError(Double_t dNum1, Double_t dErr1, Double_t dNum2, Do
 
 TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
 {
-  printf("DivideHistograms1D: Start: %s/%s\n", his1->GetName(), his2->GetName());
   if(!his1 || !his2)
   {
     printf("DivideHistograms1D: Error: Invalid histograms!\n");
     return NULL;
   }
-  std::vector<Double_t> axisX1;
-  std::vector<Double_t> axisX2;
-  for(Int_t iBin = 1; iBin <= his1->GetNbinsX() + 1; iBin++)
-    axisX1.push_back(his1->GetXaxis()->GetBinLowEdge(iBin));
-  for(Int_t iBin = 1; iBin <= his2->GetNbinsX() + 1; iBin++)
-    axisX2.push_back(his2->GetXaxis()->GetBinLowEdge(iBin));
-  if(axisX1 != axisX2)
+  printf("DivideHistograms1D: Start: %s/%s\n", his1->GetName(), his2->GetName());
+  if(!CompareAxes(his1->GetXaxis(), his2->GetXaxis()))
   {
     printf("DivideHistograms1D: Error: Axis bins do not match!\n");
     return NULL;
@@ -315,14 +309,6 @@ TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
     sNameDiv = Form("%s%s", his1->GetName(), "-Div");
   TH1D* hisDiv = (TH1D*)his1->Clone(sNameDiv.Data());
   hisDiv->Reset(); // reset integral
-  std::vector<Double_t> axisX3;
-  for(Int_t iBin = 1; iBin <= hisDiv->GetNbinsX() + 1; iBin++)
-    axisX3.push_back(hisDiv->GetXaxis()->GetBinLowEdge(iBin));
-  if(axisX1 != axisX3)
-  {
-    printf("DivideHistograms1D: Error: Axis bins of new and old histogram do not match!\n");
-    return NULL;
-  }
   hisDiv->SetTitle(Form("%s/%s;%s;%s/%s", his1->GetName(), his2->GetName(), his1->GetXaxis()->GetTitle(), his1->GetYaxis()->GetTitle(), his2->GetYaxis()->GetTitle()));
   Double_t dRatio = 0;
   Double_t dErr = 0;
@@ -341,6 +327,11 @@ TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
 
 TH2D* DivideHistograms2D(TH2* his1, TH2* his2, TString sNameDiv = "")
 {
+  if(!his1 || !his2)
+  {
+    printf("DivideHistograms2D: Error: Invalid histograms!\n");
+    return NULL;
+  }
   printf("DivideHistograms2D: Start: %s/%s\n", his1->GetName(), his2->GetName());
   if(!CompareAxes2D(his1, his2))
     return NULL;
@@ -390,7 +381,6 @@ TH2D* MultiplyHistograms2D(TH2* his1, TH2* his2, TString sNameMult = "")
 
 TH1D* DivideHistogram(TH1* his1, Double_t dNumber, Double_t dError, Bool_t bBinWidth = 0, TString sNameDiv = "")
 {
-  printf("DivideHistogram: Start: %s/%f\n", his1->GetName(), dNumber);
   if(!his1)
   {
     printf("DivideHistogram: Error: Invalid histogram!\n");
@@ -401,6 +391,7 @@ TH1D* DivideHistogram(TH1* his1, Double_t dNumber, Double_t dError, Bool_t bBinW
     printf("DivideHistogram: Error: Division by zero not allowed\n");
     return NULL;
   }
+  printf("DivideHistogram: Start: %s/%f\n", his1->GetName(), dNumber);
   if(!sNameDiv.Length())
     sNameDiv = Form("%s%s", his1->GetName(), "-Div");
   TH1D* hisDiv = (TH1D*)his1->Clone(sNameDiv.Data());
@@ -477,24 +468,12 @@ Bool_t CompareAxes2D(TH2* his1, TH2* his2)
     printf("CompareAxes2D: Error: Invalid histograms!\n");
     return kFALSE;
   }
-  std::vector<Double_t> axisX1;
-  std::vector<Double_t> axisX2;
-  for(Int_t iBin = 1; iBin <= his1->GetNbinsX() + 1; iBin++)
-    axisX1.push_back(his1->GetXaxis()->GetBinLowEdge(iBin));
-  for(Int_t iBin = 1; iBin <= his2->GetNbinsX() + 1; iBin++)
-    axisX2.push_back(his2->GetXaxis()->GetBinLowEdge(iBin));
-  if(axisX1 != axisX2)
+  if(!CompareAxes(his1->GetXaxis(), his2->GetXaxis()))
   {
     printf("CompareAxes2D: Error: Axis bins x do not match!\n");
     return kFALSE;
   }
-  std::vector<Double_t> axisY1;
-  std::vector<Double_t> axisY2;
-  for(Int_t iBin = 1; iBin <= his1->GetNbinsY() + 1; iBin++)
-    axisY1.push_back(his1->GetYaxis()->GetBinLowEdge(iBin));
-  for(Int_t iBin = 1; iBin <= his2->GetNbinsY() + 1; iBin++)
-    axisY2.push_back(his2->GetYaxis()->GetBinLowEdge(iBin));
-  if(axisY1 != axisY2)
+  if(!CompareAxes(his1->GetYaxis(), his2->GetYaxis()))
   {
     printf("CompareAxes2D: Error: Axis bins y do not match!\n");
     return kFALSE;
