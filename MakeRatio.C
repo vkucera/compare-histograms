@@ -549,18 +549,15 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         }
       }
       // Run recursively for response histograms.
-      Int_t iDegreeR = 1; // dimension of the spectrum
       TH1* hMeas1 = his1R->Hmeasured();
       TH1* hMeas2 = his2R->Hmeasured();
-      if(hMeas1->InheritsFrom("TH2")) // account for 2D unfolding
-        iDegreeR = 2;
-      Run(hMeas1, hMeas2, sNameHis + "_measured", iDegreeR, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hMeas1, hMeas2, sNameHis + "_measured", his1R->GetDimensionMeasured(), sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
       TH1* hTruth1 = his1R->Htruth();
       TH1* hTruth2 = his2R->Htruth();
-      Run(hTruth1, hTruth2, sNameHis + "_truth", iDegreeR, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hTruth1, hTruth2, sNameHis + "_truth", his1R->GetDimensionTruth(), sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
       TH1* hFake1 = his1R->Hfakes();
       TH1* hFake2 = his2R->Hfakes();
-      Run(hFake1, hFake2, sNameHis + "_fakes", iDegreeR, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hFake1, hFake2, sNameHis + "_fakes", his1R->GetDimensionTruth(), sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
       TH2* hResp1 = his1R->Hresponse();
       TH2* hResp2 = his2R->Hresponse();
       Run(hResp1, hResp2, sNameHis + "_response", 2, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
