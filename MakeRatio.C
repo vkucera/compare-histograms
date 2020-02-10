@@ -268,6 +268,8 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
   TH1D* his2H1 = 0;
   TH2D* his1H2 = 0;
   TH2D* his2H2 = 0;
+  TH3D* his1H3 = 0;
+  TH3D* his2H3 = 0;
   THnSparseD* his1Hn = 0;
   THnSparseD* his2Hn = 0;
   RooUnfoldResponse* his1R = 0;
@@ -421,8 +423,19 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
     }
     case 3:
     {
-      printf("Error: TH3 not implemented. Cannot process %s\n", sNameHis.Data());
-      return -1;
+      his1H3 = (TH3D*)his1;
+      his2H3 = (TH3D*)his2;
+      if(AreIdentical(his1H3, his2H3))
+      {
+        printf("Histograms %s are identical.\n", sNameHis.Data());
+        if(bSkipIdentical)
+        {
+          printf("No plots needed. ;-)\n");
+          return 1;
+        }
+      }
+      printf("Histograms %s are different but that is all for now.\n", sNameHis.Data());
+      return 0;
       break;
     }
     case 4:
