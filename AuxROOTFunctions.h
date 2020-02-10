@@ -180,7 +180,10 @@ void CheckHistogram(TH1* hist)
 Double_t GetHistEntries(TH1* hist)
 {
   if(!hist)
+  {
+    printf("GetHistEntries: Error: No histogram.\n");
     return 0;
+  }
   Double_t fEntriesHist = 0;
   for(Int_t i = 1; i <= (hist->GetNbinsX()); i++)
   {
@@ -202,7 +205,10 @@ void SetLegend(TLegend* leg, Float_t fSizeText = 0.034)
 Double_t GetHistError(TH1* his)
 {
   if(!his)
+  {
+    printf("GetHistError: Error: No histogram.\n");
     return 0;
+  }
   Double_t dSumError2 = 0;
   Double_t dError = 0;
   for(Int_t i = 1; i <= (his->GetNbinsX()); i++)
@@ -216,7 +222,10 @@ Double_t GetHistError(TH1* his)
 TGraphErrors* MakeGraphErrors(TH1* his, TString title = "", Int_t color = kBlack, Int_t style = 2, Float_t size = 1)
 {
   if(!his)
+  {
+    printf("MakeGraphErrors: Error: No histogram.\n");
     return NULL;
+  }
   TGraphErrors* grHis = new TGraphErrors(his);
   if(title.Length())
     grHis->SetTitle(title.Data());
@@ -232,7 +241,10 @@ TGraphErrors* MakeGraphErrors(TH1* his, TString title = "", Int_t color = kBlack
 void SetGraphAsymmErrors(TGraphAsymmErrors* grHis, TString title = "", Int_t color = kBlack, Int_t style = 2, Int_t size = 1)
 {
   if(!grHis)
+  {
+    printf("SetGraphAsymmErrors: Error: No graph.\n");
     return;
+  }
   if(title.Length())
     grHis->SetTitle(title.Data());
   else
@@ -396,7 +408,12 @@ TH2D* DivideHistograms2D(TH2* his1, TH2* his2, TString sNameDiv = "")
 
 TH2D* MultiplyHistograms2D(TH2* his1, TH2* his2, TString sNameMult = "")
 {
-  printf("MultiplyHistograms2D: Start: %s*%s\n", his1->GetName(), his2->GetName());
+  if(!his1 || !his2)
+  {
+    printf("MultiplyHistograms2D: Error: Invalid histograms!\n");
+    return NULL;
+  }
+  //printf("MultiplyHistograms2D: Start: %s*%s\n", his1->GetName(), his2->GetName());
   if(!CompareAxes2D(his1, his2))
     return NULL;
   if(!sNameMult.Length())
@@ -413,7 +430,7 @@ TH2D* MultiplyHistograms2D(TH2* his1, TH2* his2, TString sNameMult = "")
       hisMult->SetBinContent(iBinX, iBinY, dProduct);
       hisMult->SetBinError(iBinX, iBinY, dErr);
     }
-  printf("MultiplyHistograms2D: End: %s*%s\n", his1->GetName(), his2->GetName());
+  //printf("MultiplyHistograms2D: End: %s*%s\n", his1->GetName(), his2->GetName());
   return hisMult;
 }
 
@@ -519,7 +536,7 @@ Bool_t AreIdentical(THnSparse* his1, THnSparse* his2)
   }
 
   // Compare number of dimensions
-  if (his1->GetNdimensions() != his2->GetNdimensions())
+  if(his1->GetNdimensions() != his2->GetNdimensions())
     return kFALSE;
 
   // Compare number of entries
@@ -527,11 +544,11 @@ Bool_t AreIdentical(THnSparse* his1, THnSparse* his2)
     return kFALSE;
 
   // Compare number of filled bins
-  if (his1->GetNbins() != his2->GetNbins())
+  if(his1->GetNbins() != his2->GetNbins())
     return kFALSE;
 
   // Compare axis binning
-  for (Int_t iAx = 0; iAx < his1->GetNdimensions(); iAx++)
+  for(Int_t iAx = 0; iAx < his1->GetNdimensions(); iAx++)
   {
     if(!CompareAxes(his1->GetAxis(iAx), his2->GetAxis(iAx)))
       return kFALSE;
@@ -556,29 +573,29 @@ Bool_t AreIdentical(RooUnfoldResponse* his1, RooUnfoldResponse* his2)
   }
 
   // Compare number of dimensions
-  if (his1->GetDimensionMeasured() != his2->GetDimensionMeasured() || his1->GetDimensionTruth() != his2->GetDimensionTruth())
+  if(his1->GetDimensionMeasured() != his2->GetDimensionMeasured() || his1->GetDimensionTruth() != his2->GetDimensionTruth())
     return kFALSE;
 
   // Compare number of bins
-  if (his1->GetNbinsMeasured() != his2->GetNbinsMeasured() || his1->GetNbinsTruth() != his2->GetNbinsTruth())
+  if(his1->GetNbinsMeasured() != his2->GetNbinsMeasured() || his1->GetNbinsTruth() != his2->GetNbinsTruth())
     return kFALSE;
 
   // Compare bin content
   TH1* hFake1 = his1->Hfakes();
   TH1* hFake2 = his2->Hfakes();
-  if (!AreIdentical(hFake1, hFake2))
+  if(!AreIdentical(hFake1, hFake2))
     return kFALSE;
   TH1* hMeas1 = his1->Hmeasured();
   TH1* hMeas2 = his2->Hmeasured();
-  if (!AreIdentical(hMeas1, hMeas2))
+  if(!AreIdentical(hMeas1, hMeas2))
     return kFALSE;
   TH1* hTruth1 = his1->Htruth();
   TH1* hTruth2 = his2->Htruth();
-  if (!AreIdentical(hTruth1, hTruth2))
+  if(!AreIdentical(hTruth1, hTruth2))
     return kFALSE;
   TH2* hResp1 = his1->Hresponse();
   TH2* hResp2 = his2->Hresponse();
-  if (!AreIdentical(hResp1, hResp2))
+  if(!AreIdentical(hResp1, hResp2))
     return kFALSE;
 
   return kTRUE;
@@ -1005,7 +1022,10 @@ TGraphAsymmErrors* GetExtremesCombined(TGraphAsymmErrors** arrayGr, const Int_t 
 TGraphAsymmErrors* DivideGraphAsymm(TGraphAsymmErrors* grNum, TGraphAsymmErrors* grDen)
 {
   if(!grNum || !grDen)
+  {
+    printf("DivideGraphAsymm: Error: No graphs.\n");
     return NULL;
+  }
   Double_t dValXNum, dValYNum, dErrYPlusNum, dErrYMinusNum, dValXDen, dValYDen, dErrYPlusDen, dErrYMinusDen, dValYDiv, dErrYPlusDiv, dErrYMinusDiv;
   TGraphAsymmErrors* grDiv = new TGraphAsymmErrors(*grNum);
   Int_t iNBinsX = grNum->GetN(); // number of points
@@ -1087,7 +1107,10 @@ TGraphAsymmErrors* GetRelativeErrors(TGraphAsymmErrors* gr)
 Bool_t ApplyRelativeErrors(TGraphAsymmErrors* gr, TGraphAsymmErrors* grErrRel)
 {
   if(!gr || !grErrRel)
+  {
+    printf("ApplyRelativeErrors: Error: No graphs.\n");
     return kFALSE;
+  }
   Double_t dValX, dValY, dErrYPlus, dErrYMinus;
   Double_t dErrRelPlus, dErrRelMinus;
   for(Int_t iPoint = 0; iPoint < gr->GetN(); iPoint++)
@@ -1110,7 +1133,7 @@ void PrintBinning(TH1* his)
 {
   if(!his)
   {
-    printf("PrintBinning: Bad histogram\n");
+    printf("PrintBinning: Error: No histogram\n");
     return;
   }
   Int_t iNBins = his->GetNbinsX();
@@ -1129,7 +1152,7 @@ void PrintContent(TH1* his)
 {
   if(!his)
   {
-    printf("PrintContent: Bad histogram\n");
+    printf("PrintContent: Error: No histogram\n");
     return;
   }
   Int_t iNBins = his->GetNbinsX();
@@ -1141,7 +1164,10 @@ TH1D* OptimizeBinning(TH1D* hisSource, Double_t dNMin = 100)
 {
   // change binning of the histogram so that there are at least dNMin entries in each not empty bin
   if(!hisSource)
+  {
+    printf("OptimizeBinning: Error: No histogram.\n");
     return NULL;
+  }
   /*
   printf("Source:\n");
   PrintBinning(hisSource);
