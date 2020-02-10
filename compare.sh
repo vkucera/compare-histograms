@@ -1,5 +1,12 @@
 #!/bin/bash
 
+######################################################
+# License: CC BY-NC-SA 4.0                           #
+# https://creativecommons.org/licenses/by-nc-sa/4.0/ #
+# Author: Vit Kucera <vit.kucera@cern.ch>            #
+# 2020                                               #
+######################################################
+
 # comment character for skipping histograms
 skipString="#"
 

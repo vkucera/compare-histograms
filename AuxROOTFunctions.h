@@ -1,3 +1,10 @@
+/******************************************************
+ * License: CC BY-NC-SA 4.0                           *
+ * https://creativecommons.org/licenses/by-nc-sa/4.0/ *
+ * Author: Vit Kucera <vit.kucera@cern.ch>            *
+ * 2020                                               *
+ ******************************************************/
+
 Int_t iMyColors[] = {1, kBlue, 2, 8, kMagenta - 3, kOrange - 3, kRed + 2, 3}; // my personal colours
 const Int_t iNMyColors = sizeof(iMyColors) / sizeof(iMyColors[0]);
 Int_t iMyMarkersEmpty[] = {kOpenCircle, kOpenSquare, kOpenDiamond, kOpenCross, 30, kOpenTriangleUp, 32}; // my personal markers (empty)
