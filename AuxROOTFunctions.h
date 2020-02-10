@@ -292,6 +292,44 @@ Double_t MultiplyNumbersError(Double_t dNum1, Double_t dErr1, Double_t dNum2, Do
   return dProduct;
 }
 
+Bool_t CompareAxes(TAxis* ax1, TAxis* ax2)
+{
+  if(!ax1 || !ax2)
+  {
+    printf("CompareAxes: Error: Invalid axes!\n");
+    return kFALSE;
+  }
+  std::vector<Double_t> axisX1;
+  std::vector<Double_t> axisX2;
+  for(Int_t iBin = 1; iBin <= ax1->GetNbins() + 1; iBin++)
+    axisX1.push_back(ax1->GetBinLowEdge(iBin));
+  for(Int_t iBin = 1; iBin <= ax2->GetNbins() + 1; iBin++)
+    axisX2.push_back(ax2->GetBinLowEdge(iBin));
+  if(axisX1 != axisX2)
+    return kFALSE;
+  return kTRUE;
+}
+
+Bool_t CompareAxes2D(TH2* his1, TH2* his2)
+{
+  if(!his1 || !his2)
+  {
+    printf("CompareAxes2D: Error: Invalid histograms!\n");
+    return kFALSE;
+  }
+  if(!CompareAxes(his1->GetXaxis(), his2->GetXaxis()))
+  {
+    printf("CompareAxes2D: Error: Axis bins x do not match!\n");
+    return kFALSE;
+  }
+  if(!CompareAxes(his1->GetYaxis(), his2->GetYaxis()))
+  {
+    printf("CompareAxes2D: Error: Axis bins y do not match!\n");
+    return kFALSE;
+  }
+  return kTRUE;
+}
+
 TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
 {
   if(!his1 || !his2)
@@ -441,44 +479,6 @@ TH1D* MultiplyHistogram(TH1* his1, Double_t dNumber, Double_t dError, Bool_t bBi
     hisMult->Scale(1., "width");
   printf("%s: End: %s*%f\n", __func__, his1->GetName(), dNumber);
   return hisMult;
-}
-
-Bool_t CompareAxes(TAxis* ax1, TAxis* ax2)
-{
-  if(!ax1 || !ax2)
-  {
-    printf("CompareAxes: Error: Invalid axes!\n");
-    return kFALSE;
-  }
-  std::vector<Double_t> axisX1;
-  std::vector<Double_t> axisX2;
-  for(Int_t iBin = 1; iBin <= ax1->GetNbins() + 1; iBin++)
-    axisX1.push_back(ax1->GetBinLowEdge(iBin));
-  for(Int_t iBin = 1; iBin <= ax2->GetNbins() + 1; iBin++)
-    axisX2.push_back(ax2->GetBinLowEdge(iBin));
-  if(axisX1 != axisX2)
-    return kFALSE;
-  return kTRUE;
-}
-
-Bool_t CompareAxes2D(TH2* his1, TH2* his2)
-{
-  if(!his1 || !his2)
-  {
-    printf("CompareAxes2D: Error: Invalid histograms!\n");
-    return kFALSE;
-  }
-  if(!CompareAxes(his1->GetXaxis(), his2->GetXaxis()))
-  {
-    printf("CompareAxes2D: Error: Axis bins x do not match!\n");
-    return kFALSE;
-  }
-  if(!CompareAxes(his1->GetYaxis(), his2->GetYaxis()))
-  {
-    printf("CompareAxes2D: Error: Axis bins y do not match!\n");
-    return kFALSE;
-  }
-  return kTRUE;
 }
 
 Bool_t AreIdentical(TH1* his1, TH1* his2)
