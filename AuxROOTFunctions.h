@@ -339,6 +339,55 @@ TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
   return hisDiv;
 }
 
+TH2D* DivideHistograms2D(TH2* his1, TH2* his2, TString sNameDiv = "")
+{
+  printf("DivideHistograms2D: Start: %s/%s\n", his1->GetName(), his2->GetName());
+  if(!CompareAxes2D(his1, his2))
+    return NULL;
+  if(!sNameDiv.Length())
+    sNameDiv = Form("%s%s", his1->GetName(), "-Div");
+  TH2D* hisDiv = (TH2D*)his1->Clone(sNameDiv.Data());
+  hisDiv->Reset(); // reset integral
+  hisDiv->SetTitle(Form("%s/%s", his1->GetName(), his2->GetName()));
+  Double_t dRatio = 0;
+  Double_t dErr = 0;
+  Double_t dInf = -1;
+  for(Int_t iBinX = 1; iBinX <= his1->GetNbinsX(); iBinX++)
+    for(Int_t iBinY = 1; iBinY <= his1->GetNbinsY(); iBinY++)
+    {
+      dRatio = DivideNumbersError(his1->GetBinContent(iBinX, iBinY), his1->GetBinError(iBinX, iBinY), his2->GetBinContent(iBinX, iBinY), his2->GetBinError(iBinX, iBinY), &dErr, dInf);
+      if(dRatio == dInf)
+        continue;
+      hisDiv->SetBinContent(iBinX, iBinY, dRatio);
+      hisDiv->SetBinError(iBinX, iBinY, dErr);
+    }
+  printf("DivideHistograms2D: End: %s/%s\n", his1->GetName(), his2->GetName());
+  return hisDiv;
+}
+
+TH2D* MultiplyHistograms2D(TH2* his1, TH2* his2, TString sNameMult = "")
+{
+  printf("MultiplyHistograms2D: Start: %s*%s\n", his1->GetName(), his2->GetName());
+  if(!CompareAxes2D(his1, his2))
+    return NULL;
+  if(!sNameMult.Length())
+    sNameMult = Form("%s%s", his1->GetName(), "-Mult");
+  TH2D* hisMult = (TH2D*)his1->Clone(sNameMult.Data());
+  hisMult->Reset(); // reset integral
+  hisMult->SetTitle(Form("%s*%s", his1->GetName(), his2->GetName()));
+  Double_t dProduct = 0;
+  Double_t dErr = 0;
+  for(Int_t iBinX = 1; iBinX <= his1->GetNbinsX(); iBinX++)
+    for(Int_t iBinY = 1; iBinY <= his1->GetNbinsY(); iBinY++)
+    {
+      dProduct = MultiplyNumbersError(his1->GetBinContent(iBinX, iBinY), his1->GetBinError(iBinX, iBinY), his2->GetBinContent(iBinX, iBinY), his2->GetBinError(iBinX, iBinY), &dErr);
+      hisMult->SetBinContent(iBinX, iBinY, dProduct);
+      hisMult->SetBinError(iBinX, iBinY, dErr);
+    }
+  printf("MultiplyHistograms2D: End: %s*%s\n", his1->GetName(), his2->GetName());
+  return hisMult;
+}
+
 TH1D* DivideHistogram(TH1* his1, Double_t dNumber, Double_t dError, Bool_t bBinWidth = 0, TString sNameDiv = "")
 {
   printf("DivideHistogram: Start: %s/%f\n", his1->GetName(), dNumber);
@@ -418,6 +467,38 @@ Bool_t CompareAxes(TAxis* ax1, TAxis* ax2)
     axisX2.push_back(ax2->GetBinLowEdge(iBin));
   if(axisX1 != axisX2)
     return kFALSE;
+  return kTRUE;
+}
+
+Bool_t CompareAxes2D(TH2* his1, TH2* his2)
+{
+  if(!his1 || !his2)
+  {
+    printf("CompareAxes2D: Error: Invalid histograms!\n");
+    return kFALSE;
+  }
+  std::vector<Double_t> axisX1;
+  std::vector<Double_t> axisX2;
+  for(Int_t iBin = 1; iBin <= his1->GetNbinsX() + 1; iBin++)
+    axisX1.push_back(his1->GetXaxis()->GetBinLowEdge(iBin));
+  for(Int_t iBin = 1; iBin <= his2->GetNbinsX() + 1; iBin++)
+    axisX2.push_back(his2->GetXaxis()->GetBinLowEdge(iBin));
+  if(axisX1 != axisX2)
+  {
+    printf("CompareAxes2D: Error: Axis bins x do not match!\n");
+    return kFALSE;
+  }
+  std::vector<Double_t> axisY1;
+  std::vector<Double_t> axisY2;
+  for(Int_t iBin = 1; iBin <= his1->GetNbinsY() + 1; iBin++)
+    axisY1.push_back(his1->GetYaxis()->GetBinLowEdge(iBin));
+  for(Int_t iBin = 1; iBin <= his2->GetNbinsY() + 1; iBin++)
+    axisY2.push_back(his2->GetYaxis()->GetBinLowEdge(iBin));
+  if(axisY1 != axisY2)
+  {
+    printf("CompareAxes2D: Error: Axis bins y do not match!\n");
+    return kFALSE;
+  }
   return kTRUE;
 }
 
@@ -522,87 +603,6 @@ Bool_t AreIdentical(RooUnfoldResponse* his1, RooUnfoldResponse* his2)
     return kFALSE;
 
   return kTRUE;
-}
-
-Bool_t CompareAxes2D(TH2* his1, TH2* his2)
-{
-  if(!his1 || !his2)
-  {
-    printf("CompareAxes2D: Error: Invalid histograms!\n");
-    return kFALSE;
-  }
-  std::vector<Double_t> axisX1;
-  std::vector<Double_t> axisX2;
-  for(Int_t iBin = 1; iBin <= his1->GetNbinsX() + 1; iBin++)
-    axisX1.push_back(his1->GetXaxis()->GetBinLowEdge(iBin));
-  for(Int_t iBin = 1; iBin <= his2->GetNbinsX() + 1; iBin++)
-    axisX2.push_back(his2->GetXaxis()->GetBinLowEdge(iBin));
-  if(axisX1 != axisX2)
-  {
-    printf("CompareAxes2D: Error: Axis bins x do not match!\n");
-    return kFALSE;
-  }
-  std::vector<Double_t> axisY1;
-  std::vector<Double_t> axisY2;
-  for(Int_t iBin = 1; iBin <= his1->GetNbinsY() + 1; iBin++)
-    axisY1.push_back(his1->GetYaxis()->GetBinLowEdge(iBin));
-  for(Int_t iBin = 1; iBin <= his2->GetNbinsY() + 1; iBin++)
-    axisY2.push_back(his2->GetYaxis()->GetBinLowEdge(iBin));
-  if(axisY1 != axisY2)
-  {
-    printf("CompareAxes2D: Error: Axis bins y do not match!\n");
-    return kFALSE;
-  }
-  return kTRUE;
-}
-
-TH2D* DivideHistograms2D(TH2* his1, TH2* his2, TString sNameDiv = "")
-{
-  printf("DivideHistograms2D: Start: %s/%s\n", his1->GetName(), his2->GetName());
-  if(!CompareAxes2D(his1, his2))
-    return NULL;
-  if(!sNameDiv.Length())
-    sNameDiv = Form("%s%s", his1->GetName(), "-Div");
-  TH2D* hisDiv = (TH2D*)his1->Clone(sNameDiv.Data());
-  hisDiv->Reset(); // reset integral
-  hisDiv->SetTitle(Form("%s/%s", his1->GetName(), his2->GetName()));
-  Double_t dRatio = 0;
-  Double_t dErr = 0;
-  Double_t dInf = -1;
-  for(Int_t iBinX = 1; iBinX <= his1->GetNbinsX(); iBinX++)
-    for(Int_t iBinY = 1; iBinY <= his1->GetNbinsY(); iBinY++)
-    {
-      dRatio = DivideNumbersError(his1->GetBinContent(iBinX, iBinY), his1->GetBinError(iBinX, iBinY), his2->GetBinContent(iBinX, iBinY), his2->GetBinError(iBinX, iBinY), &dErr, dInf);
-      if(dRatio == dInf)
-        continue;
-      hisDiv->SetBinContent(iBinX, iBinY, dRatio);
-      hisDiv->SetBinError(iBinX, iBinY, dErr);
-    }
-  printf("DivideHistograms2D: End: %s/%s\n", his1->GetName(), his2->GetName());
-  return hisDiv;
-}
-
-TH2D* MultiplyHistograms2D(TH2* his1, TH2* his2, TString sNameMult = "")
-{
-  printf("MultiplyHistograms2D: Start: %s*%s\n", his1->GetName(), his2->GetName());
-  if(!CompareAxes2D(his1, his2))
-    return NULL;
-  if(!sNameMult.Length())
-    sNameMult = Form("%s%s", his1->GetName(), "-Mult");
-  TH2D* hisMult = (TH2D*)his1->Clone(sNameMult.Data());
-  hisMult->Reset(); // reset integral
-  hisMult->SetTitle(Form("%s*%s", his1->GetName(), his2->GetName()));
-  Double_t dProduct = 0;
-  Double_t dErr = 0;
-  for(Int_t iBinX = 1; iBinX <= his1->GetNbinsX(); iBinX++)
-    for(Int_t iBinY = 1; iBinY <= his1->GetNbinsY(); iBinY++)
-    {
-      dProduct = MultiplyNumbersError(his1->GetBinContent(iBinX, iBinY), his1->GetBinError(iBinX, iBinY), his2->GetBinContent(iBinX, iBinY), his2->GetBinError(iBinX, iBinY), &dErr);
-      hisMult->SetBinContent(iBinX, iBinY, dProduct);
-      hisMult->SetBinError(iBinX, iBinY, dErr);
-    }
-  printf("MultiplyHistograms2D: End: %s*%s\n", his1->GetName(), his2->GetName());
-  return hisMult;
 }
 
 Double_t CalculateSimilarity(Double_t dNumTest, Double_t dNumTestErr, Double_t dNumRef, Double_t dNumRefErr, Double_t* dResultErr, Double_t dResultInf = 1e20)
