@@ -283,6 +283,8 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
   TH2D* hisRatioH2Dev = 0;
   std::vector<TH1D*> vecRatio;
 
+  printf("Processing %s (deg %d)\n", sNameHis.Data(), iDegree);
+
   switch(iDegree)
   {
     case 1:
@@ -806,6 +808,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
       canRatio2D->cd(2);
       his2H2->Draw("colz");
       canRatio2D->cd(3);
+      printf("Drawing 2D ratio.\n");
       hisRatioH2->Draw("colz");
       if(bCompareWithErr)
       {
