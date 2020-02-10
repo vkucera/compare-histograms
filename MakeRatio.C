@@ -770,6 +770,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
       if(bRestrictAuto)
         AdjustRangeGraph(grRatio);
       canRatio->cd(bDrawOverlap ? 2 : 1);
+      printf("Drawing ratio.\n");
       grRatio->Draw("AP0");
       grRatio->GetXaxis()->SetLimits(hisRatioH1->GetXaxis()->GetXmin(), hisRatioH1->GetXaxis()->GetXmax());
       grRatio->GetXaxis()->SetLabelSize(dFontSizeAxis);
@@ -869,8 +870,8 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         if(bRestrictAuto)
           AdjustRangeGraph(grRatio);
         canRatio->cd(bDrawOverlap ? 2 : 1);
-        grRatio->Draw("AP0");
         printf("Drawing ratio.\n");
+        grRatio->Draw("AP0");
         grRatio->GetXaxis()->SetLimits(vecRatio[iAx]->GetXaxis()->GetXmin(), vecRatio[iAx]->GetXaxis()->GetXmax());
         grRatio->GetXaxis()->SetLabelSize(dFontSizeAxis);
         grRatio->GetXaxis()->SetTitleSize(dFontSizeAxis);
@@ -1041,10 +1042,10 @@ void AdjustRangeGraph(TGraph* gr, Double_t dMargin)
 {
   if(!gr)
   {
-    printf("AdjustRangeGraph: No graph!\n");
+    printf("AdjustRangeGraph: Error: No graph!\n");
     return;
   }
-  printf("AdjustRangeGraph: Run\n");
+  //printf("AdjustRangeGraph: Run\n");
   Int_t iNPoints = gr->GetN();
   Double_t dX, dY;
   Double_t dYMax = 0;
@@ -1078,23 +1079,23 @@ void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin)
   his1 = OptimizeBinning(his1, dNMin);
   if(his1->GetXaxis()->IsVariableBinSize()) // histogram was rebinned
   {
-    printf("Binning change for his1.\n");
+    //printf("Binning change for his1.\n");
 //    his2 = (TH1D*)his2->Rebin(his1->GetNbinsX(), Form("%s-2-Rebin", his2->GetName()), his1->GetXaxis()->GetXbins()->GetArray());
     his2 = (TH1D*)his2->Rebin(his1->GetNbinsX(), "", his1->GetXaxis()->GetXbins()->GetArray());
   }
-  else
-    printf("No change for his1.\n");
+  //else
+    //printf("No change for his1.\n");
   if(bTwice)
   {
     his2 = OptimizeBinning(his2, dNMin);
     if(his2->GetXaxis()->IsVariableBinSize()) // histogram was rebinned
     {
-      printf("Binning change for his2.\n");
+      //printf("Binning change for his2.\n");
 //    his1 = (TH1D*)his1->Rebin(his2->GetNbinsX(), Form("%s-2-Rebin", his1->GetName()), his2->GetXaxis()->GetXbins()->GetArray());
       his1 = (TH1D*)his1->Rebin(his2->GetNbinsX(), "", his2->GetXaxis()->GetXbins()->GetArray());
     }
-    else
-      printf("No change for his2.\n");
+    //else
+      //printf("No change for his2.\n");
   }
   *phis1 = his1;
   *phis2 = his2;

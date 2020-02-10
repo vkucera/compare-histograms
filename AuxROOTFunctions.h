@@ -337,7 +337,7 @@ TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
     printf("DivideHistograms1D: Error: Invalid histograms!\n");
     return NULL;
   }
-  printf("DivideHistograms1D: Start: %s/%s\n", his1->GetName(), his2->GetName());
+  //printf("DivideHistograms1D: Start: %s/%s\n", his1->GetName(), his2->GetName());
   if(!CompareAxes(his1->GetXaxis(), his2->GetXaxis()))
   {
     printf("DivideHistograms1D: Error: Axis bins do not match!\n");
@@ -359,7 +359,7 @@ TH1D* DivideHistograms1D(TH1* his1, TH1* his2, TString sNameDiv = "")
     hisDiv->SetBinContent(iBin, dRatio);
     hisDiv->SetBinError(iBin, dErr);
   }
-  printf("DivideHistograms1D: End: %s/%s\n", his1->GetName(), his2->GetName());
+  //printf("DivideHistograms1D: End: %s/%s\n", his1->GetName(), his2->GetName());
   return hisDiv;
 }
 
@@ -370,7 +370,7 @@ TH2D* DivideHistograms2D(TH2* his1, TH2* his2, TString sNameDiv = "")
     printf("DivideHistograms2D: Error: Invalid histograms!\n");
     return NULL;
   }
-  printf("DivideHistograms2D: Start: %s/%s\n", his1->GetName(), his2->GetName());
+  //printf("DivideHistograms2D: Start: %s/%s\n", his1->GetName(), his2->GetName());
   if(!CompareAxes2D(his1, his2))
     return NULL;
   if(!sNameDiv.Length())
@@ -390,7 +390,7 @@ TH2D* DivideHistograms2D(TH2* his1, TH2* his2, TString sNameDiv = "")
       hisDiv->SetBinContent(iBinX, iBinY, dRatio);
       hisDiv->SetBinError(iBinX, iBinY, dErr);
     }
-  printf("DivideHistograms2D: End: %s/%s\n", his1->GetName(), his2->GetName());
+  //printf("DivideHistograms2D: End: %s/%s\n", his1->GetName(), his2->GetName());
   return hisDiv;
 }
 
