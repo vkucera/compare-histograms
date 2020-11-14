@@ -11,7 +11,7 @@
 
 # analysis strings
 ana_name="D0pp" # LcpK0spp, D0pp_FF, D0pp_zg
-ana_type="jet_dR" # MBjetvspt, jet_zg
+ana_type="jet_zg" # MBjetvspt, jet_zg
 
 # directories with results
 
@@ -73,12 +73,12 @@ res_0824_Lc_deltaR="/data/Derived_testResults/Jets/Lc/vAN-20200824_ROOT6-1/ff/de
 ########################################################################################################################
 
 # main result directories (Select from the list above.)
-base1=$res_0304_D0_deltaR
-base2=$res_0824_D0_deltaR
+base1=$res_0304_D0_zg_default_now # test
+base2=$res_0304_D0_zg_default_prel # reference
 
 # labels to identify histograms on the plots
-label1="0304" # test
-label2="0824" # reference
+label1="test" # test
+label2="reference" # reference
 
 # names of data type subdirectories
 dir_real="pp_data" # real data
