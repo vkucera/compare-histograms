@@ -13,6 +13,8 @@ thisDir="$(dirname $(realpath $0))"
 script="$thisDir/compare.sh" # path to the bash script for running comparison between files
 pathList="$thisDir/lists" # path to the directory with lists
 
+[ -d "$pathList" ] || { echo "Creating list directory $pathList"; mkdir -p "$pathList" || { echo "Error: Failed to create list directory."; exit 1; } }
+
 # Load input specification.
 source "$thisDir/input.sh"
 
@@ -38,7 +40,7 @@ function do_compare {
     list=${lists[$i]}
     list_file="$pathList/$list.txt"
     if [ ! -f "$list_file" ]; then
-      echo "Generating list $list."
+      echo "Generating list $list"
       make_histogram_list "$dir1/$file" "$list_file" || exit 1
     fi
     log_file="${file/.root/}_$list.txt"
