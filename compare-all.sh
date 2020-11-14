@@ -35,16 +35,16 @@ function do_compare {
   echo "$dir2"
   for ((i = 0; i < ${#files[@]}; ++i)); do
     file=${files[$i]}
+    list=${lists[$i]}
+    echo -e "\nComparing histos from list $list in files $file"
     [ -f "$dir1/$file" ] || { echo "Error: File $dir1/$file does not exist."; exit 1; }
     [ -f "$dir2/$file" ] || { echo "Error: File $dir2/$file does not exist."; exit 1; }
-    list=${lists[$i]}
     list_file="$pathList/$list.txt"
     if [ ! -f "$list_file" ]; then
       echo "Generating list $list"
       make_histogram_list "$dir1/$file" "$list_file" || exit 1
     fi
     log_file="${file/.root/}_$list.txt"
-    echo "Comparing histos from list $list in files $file"
     bash $script "$dir1/$file" "$dir2/$file" "$label1" "$label2" "$list" > "$log_file" 2>&1
     n_id=$(grep -c identical $log_file) # number of identical histograms
     n_tot=$(grep -v '#' "$list_file" | wc -l) # number of histograms that should be processed
@@ -57,7 +57,7 @@ function do_compare {
 now="date +%H:%M:%S"
 $now
 
-echo "Comparing real data directories:"
+echo -e "\nComparing real data directories:"
 dirOut="real"
 rm -rf "$dirOut" && \
 mkdir -p "$dirOut" && \
@@ -65,7 +65,7 @@ cd "$dirOut" || { echo "Error: Failed to make the output directory $dirOut."; ex
 do_compare $base_real1 $base_real2 files_real lists_real
 cd ..
 
-echo "Comparing MC data directories:"
+echo -e "\nComparing MC data directories:"
 dirOut="sim"
 rm -rf "$dirOut" && \
 mkdir -p "$dirOut" && \
