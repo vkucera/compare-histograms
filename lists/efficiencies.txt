@@ -1,7 +1,0 @@
-#efficiencies
-eff_fd_mult0
-eff_fd_mult1
-eff_fd_mult2
-eff_mult0
-eff_mult1
-eff_mult2
