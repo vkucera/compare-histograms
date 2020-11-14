@@ -33,15 +33,15 @@
 #include "AuxROOTFunctions.h"
 
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree);
-void AdjustRangeGraph(TGraph* gr, Double_t dMargin = 0.1);
+int AdjustRangeGraph(TGraph* gr, Double_t dMargin = 0.1);
 void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin = 100);
-Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1 = "1", TString sTag2 = "2", TH1D* hisNorm1H1 = 0, TH1D* hisNorm2H1 = 0, TFile* fileOut = 0);
+int Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1 = "1", TString sTag2 = "2", Double_t dNorm1 = -1, Double_t dNorm2 = -1, TFile* fileOut = 0);
 
 // settings
 Bool_t bSkipIdentical = 1; // do not make plots for identical histograms
 Bool_t bSave = 1; // save ratios in a file
-Bool_t bCorrelated = 0; // divide combined error by sqrt(2) if both histograms are from the same sample
-Bool_t bCompareWithErr = 0; // for 2D ratios, make a second plot and display ratio also as (ratio - 1)/error_ratio
+Bool_t bCorrelated = 1; // divide combined error by sqrt(2) if both histograms are from the same sample
+Bool_t bCompareWithErr = 1; // for 2D ratios, make a second plot and display ratio also as (ratio - 1)/error_ratio
 Bool_t bTHnSlices = 0; // make all projections in slices of others axes
 Int_t iNTHnSlices = 4; //24; // number of slices for each axis
 Bool_t bRestrict = 0; // restrict range of y-axis (and z-axis for 2D) manually, using dRatioMin and dRatioMax
@@ -54,19 +54,19 @@ Bool_t bBinWidth = 0; // divide 1D histograms by bin width for preserving shapes
 Bool_t bDrawOverlap = 1; // divide canvas and plot the overlap of histograms in the upper half and their ratio in the lower half
 
 // axis: m_V0; pt_V0; eta_V0; pt_jet
-Int_t iAxesSkipProj[] = { -1}; // list of axes to skip when making projection
+Int_t iAxesSkipProj[] = {-1}; // list of axes to skip when making projection
 const Int_t iNAxesSkipProj = sizeof(iAxesSkipProj) / sizeof(iAxesSkipProj[0]);
-Int_t iAxesSkipSlice[] = { -1}; // list of axes to skip when making slices
+Int_t iAxesSkipSlice[] = {-1}; // list of axes to skip when making slices
 const Int_t iNAxesSkipSlice = sizeof(iAxesSkipSlice) / sizeof(iAxesSkipSlice[0]);
 
-void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sPath2, TString sPathNorm1 = "", TString sPathNorm2 = "", TString sTag1 = "1", TString sTag2 = "2")
+int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sPath2, TString sPathNorm1 = "", TString sPathNorm2 = "", TString sTag1 = "1", TString sTag2 = "2")
 {
   gStyle->SetOptStat(0);
 
   if(!sNameFile1.Length() || !sNameFile2.Length() || !sPath1.Length() || !sPath2.Length())
   {
     printf("Error: Invalid input\n");
-    return;
+    return 1;
   }
 
   // input
@@ -96,7 +96,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   if(file1->IsZombie())
   {
     printf("failed (Error)\n");
-    return;
+    return 1;
   }
   printf("OK\n");
 
@@ -105,7 +105,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   if(file2->IsZombie())
   {
     printf("failed (Error)\n");
-    return;
+    return 1;
   }
   printf("OK\n");
 
@@ -116,25 +116,37 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     if(fileOut->IsZombie())
     {
       printf("failed (Error)\n");
-      return;
+      return 1;
     }
     printf("OK\n");
   }
 
+  Double_t dNorm1 = -1;
+  Double_t dNorm2 = -1;
+  Int_t iBinNorm = 1;
   if(sPathNorm1.Length())
   {
     hisNorm1H1 = (TH1D*)GetHistogram(file1, sPathNorm1, sNameHisNorm, iDegreeHisNorm1);
     if(!hisNorm1H1)
     {
-//      printf("Error: Failed to load norm histogram 1 %s\n", sNameHisNorm.Data());
-      return;
+      //printf("Error: Failed to load norm histogram 1 %s\n", sNameHisNorm.Data());
+      return 1;
     }
-
     hisNorm2H1 = (TH1D*)GetHistogram(file2, sPathNorm2, sNameHisNorm, iDegreeHisNorm2);
     if(!hisNorm2H1)
     {
-//      printf("Error: Failed to load norm histogram 2 %s\n", sNameHisNorm.Data());
-      return;
+      //printf("Error: Failed to load norm histogram 2 %s\n", sNameHisNorm.Data());
+      return 1;
+    }
+    if(iBinNorm == -1)
+    {
+      dNorm1 = hisNorm1H1->Integral();
+      dNorm2 = hisNorm2H1->Integral();
+    }
+    else
+    {
+      dNorm1 = hisNorm1H1->GetBinContent(iBinNorm);
+      dNorm2 = hisNorm2H1->GetBinContent(iBinNorm);
     }
   }
 
@@ -147,7 +159,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     if(!fileList1.good())
     {
       printf("Error: Failed to open file %s\n", sPath1.Data());
-      return;
+      return 1;
     }
     if(sPath1.EqualTo(sPath2))
       bSameLists = kTRUE;
@@ -157,7 +169,7 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
       if(!fileList2.good())
       {
         printf("Error: Failed to open file %s\n", sPath2.Data());
-        return;
+        return 1;
       }
     }
   }
@@ -191,20 +203,20 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     his1 = GetHistogram(file1, sPath1, sNameHis, iDegreeHis1);
     if(!his1)
     {
-//    printf("Error: Failed to load histogram 1 %s\n", sNameHis.Data());
+      //printf("Error: Failed to load histogram 1 %s\n", sNameHis.Data());
       continue;
     }
 
     his2 = GetHistogram(file2, sPath2, sNameHis, iDegreeHis2);
     if(!his2)
     {
-//    printf("Error: Failed to load histogram 2 %s\n", sNameHis.Data());
+      //printf("Error: Failed to load histogram 2 %s\n", sNameHis.Data());
       continue;
     }
 
     if(iDegreeHis1 != iDegreeHis2)
     {
-      printf("Histograms have different degrees: %d %d\n", iDegreeHis1, iDegreeHis2);
+      printf("Error: Histograms have different degrees: %d %d\n", iDegreeHis1, iDegreeHis2);
       continue;
     }
 
@@ -215,8 +227,11 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
     }
 
     // make the ratio
-    Int_t iResult = Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
-//    printf("Run returned %d\n", iResult);
+    Printf("Running comparison for: %s", sNameHis.Data());
+    int iResult = Run(his1, his2, sNameHis, iDegreeHis1, sTag1, sTag2, dNorm1, dNorm2, fileOut);
+    //printf("Run returned %d\n", iResult);
+    //if (iResult == -1)
+    //  return 1;
   }
 
   if(bListInput)
@@ -230,9 +245,11 @@ void MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString s
   file2->Close();
   if(bSave)
     fileOut->Close();
+
+  return 0;
 }
 
-Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1, TString sTag2, TH1D* hisNorm1H1, TH1D* hisNorm2H1, TFile* fileOut)
+int Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString sTag1, TString sTag2, Double_t dNorm1, Double_t dNorm2, TFile* fileOut)
 {
   // Make ratios his1/his2 and make plots.
   // return values:
@@ -248,7 +265,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
   Int_t iCanWidth = 800;
   TString sNameCan = "Ratio";
   TString kImageSuf = "png";
-//  kImageSuf = "eps";
+  //kImageSuf = "eps";
   TLegend* legend = 0;
   Double_t legx1 = 0.8, legy1 = 0.7, legx2 = 0.9, legy2 = 0.9;
   Double_t dFontSizeLeg = 0.05;
@@ -307,7 +324,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
           return 1;
         }
       }
-//      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H1->GetTitle(), his1H1->GetName());
+      //printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H1->GetTitle(), his1H1->GetName());
       if(!strlen(his1H1->GetTitle()))  // Make sure the histograms don't have empty titles.
         his1H1->SetTitle(his1H1->GetName());
       if(bOptimizeBinning)
@@ -331,10 +348,10 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
           return 1;
         }
       }
-//      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
+      //printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
       if(!strlen(his1H2->GetTitle()))  // Make sure the histograms don't have empty titles.
         his1H2->SetTitle(his1H2->GetName());
-//      printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
+      //printf("Histogram %s: title %s, name %s\n", sNameHis.Data(), his1H2->GetTitle(), his1H2->GetName());
       hisRatioH2 = DivideHistograms2D(his1H2, his2H2);
       if(!hisRatioH2)
         return -1;
@@ -560,16 +577,16 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
       // Run recursively for response histograms.
       TH1* hMeas1 = his1R->Hmeasured();
       TH1* hMeas2 = his2R->Hmeasured();
-      Run(hMeas1, hMeas2, sNameHis + "_measured", his1R->GetDimensionMeasured(), sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hMeas1, hMeas2, sNameHis + "_measured", his1R->GetDimensionMeasured(), sTag1, sTag2, dNorm1, dNorm2, fileOut);
       TH1* hTruth1 = his1R->Htruth();
       TH1* hTruth2 = his2R->Htruth();
-      Run(hTruth1, hTruth2, sNameHis + "_truth", his1R->GetDimensionTruth(), sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hTruth1, hTruth2, sNameHis + "_truth", his1R->GetDimensionTruth(), sTag1, sTag2, dNorm1, dNorm2, fileOut);
       TH1* hFake1 = his1R->Hfakes();
       TH1* hFake2 = his2R->Hfakes();
-      Run(hFake1, hFake2, sNameHis + "_fakes", his1R->GetDimensionTruth(), sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hFake1, hFake2, sNameHis + "_fakes", his1R->GetDimensionTruth(), sTag1, sTag2, dNorm1, dNorm2, fileOut);
       TH2* hResp1 = his1R->Hresponse();
       TH2* hResp2 = his2R->Hresponse();
-      Run(hResp1, hResp2, sNameHis + "_response", 2, sTag1, sTag2, hisNorm1H1, hisNorm2H1, fileOut);
+      Run(hResp1, hResp2, sNameHis + "_response", 2, sTag1, sTag2, dNorm1, dNorm2, fileOut);
       return 0;
       break;
     }
@@ -582,30 +599,16 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
   }
 
   // normalise by number of events
-  Int_t iBinNorm = 1;
-  Double_t dNorm1 = 1;
-  Double_t dNorm2 = 1;
-  Double_t dRatioNorm = 1;
-  if(hisNorm1H1 && hisNorm2H1)
+  if(dNorm1 > 0 && dNorm2 > 0)
   {
     Double_t dInf = -1;
-    if(iBinNorm == -1)
-    {
-      dNorm1 = hisNorm1H1->Integral();
-      dNorm2 = hisNorm2H1->Integral();
-    }
-    else
-    {
-      dNorm1 = hisNorm1H1->GetBinContent(iBinNorm);
-      dNorm2 = hisNorm2H1->GetBinContent(iBinNorm);
-    }
-    dRatioNorm = DivideNumbers(dNorm1, dNorm2, dInf);
+    Double_t dRatioNorm = DivideNumbers(dNorm1, dNorm2, dInf);
     if(dRatioNorm == dInf || dNorm1 <= 0 || dNorm2 <= 0)
     {
       printf("Error: Wrong normalisation\n");
       return -1;
     }
-    printf("Scaling with normalization factor: %g\n", dRatioNorm);
+    printf("Scaling with normalization factor: %g = %g/%g\n", dRatioNorm, dNorm1, dNorm2);
     switch(iDegree)
     {
       case 1:
@@ -617,7 +620,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         his1H2->Scale(1. / dNorm1);
         his2H2->Scale(1. / dNorm2);
         hisRatioH2->Scale(1. / dRatioNorm);
-//        break;
+        //break;
       case 4:
         for(UInt_t iAx = 0; iAx < vecRatio.size(); iAx++)
         {
@@ -643,7 +646,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
       case 2:
         his1H2->Scale(1., "width");
         his2H2->Scale(1., "width");
-//        break;
+        //break;
       case 4:
         for(UInt_t iAx = 0; iAx < vecRatio.size(); iAx++)
         {
@@ -673,7 +676,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
             hisRatioH2->SetBinError(iX, iY, hisRatioH2->GetBinError(iX, iY) / TMath::Sqrt(2.));
           }
         }
-//        break;
+        //break;
       case 4:
         for(UInt_t iAx = 0; iAx < vecRatio.size(); iAx++)
           for(Int_t iX = 1; iX <= (vecRatio[0])->GetXaxis()->GetNbins(); iX++)
@@ -722,7 +725,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         hisRatioH2->Write(sNameHis.Data());
         if(bCompareWithErr)
           hisRatioH2Dev->Write(Form("%s-Dev", sNameHis.Data()));
-//        break;
+          //break;
       case 4:
         for(UInt_t iAx = 0; iAx < vecRatio.size(); iAx++)
           (vecRatio[iAx])->Write(Form("%s_%s%d", sNameHis.Data(), (bTHnSlices ? "S" : ""), iAx));
@@ -825,7 +828,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         hisRatioH2Dev->SetTitle(Form("%s;%s;%s;%s", sTitle.Data(), his1H2->GetXaxis()->GetTitle(), his1H2->GetYaxis()->GetTitle(), sLabelRatioDev.Data()));
         canRatioDev->SetRightMargin(0.2);
         hisRatioH2Dev->Draw("colz");
-//        canRatioDev->SaveAs(Form("%s_%s-Dev.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
+        //canRatioDev->SaveAs(Form("%s_%s-Dev.%s", sNameCan.Data(), sNameHis.Data(), kImageSuf.Data()));
         canRatio2D->cd(4);
         hisRatioH2Dev->Draw("colz");
         delete canRatioDev;
@@ -835,7 +838,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
       if(hisRatioH2Dev)
         delete hisRatioH2Dev;
       delete canRatio2D;
-//      break;
+      //break;
     case 4:
       for(UInt_t iAx = 0; iAx < vecRatio.size(); iAx++)
       {
@@ -877,7 +880,7 @@ Int_t Run(TObject* his1, TObject* his2, TString sNameHis, Int_t iDegree, TString
         if(bRestrictAuto)
           AdjustRangeGraph(grRatio);
         canRatio->cd(bDrawOverlap ? 2 : 1);
-        printf("Drawing ratio.\n");
+        printf("Drawing projection ratio %d.\n", iAx);
         grRatio->Draw("AP0");
         grRatio->GetXaxis()->SetLimits(vecRatio[iAx]->GetXaxis()->GetXmin(), vecRatio[iAx]->GetXaxis()->GetXmax());
         grRatio->GetXaxis()->SetLabelSize(dFontSizeAxis);
@@ -996,25 +999,25 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
       }
     }
 
-//    printf("Loading histogram %s\n", sNameHis.Data());
+    //printf("Loading histogram %s\n", sNameHis.Data());
     if(list1) // file/dir/list/his
     {
-//    printf("Loading from list\n");
+      //printf("Loading from list\n");
       his = list1->FindObject(sNameHis.Data());
     }
     else if(list0) // file/list/his
     {
-//    printf("Loading from list\n");
+      //printf("Loading from list\n");
       his = list0->FindObject(sNameHis.Data());
     }
     else if(dir0) // file/dir/his (this should be handled by the simple way)
     {
-//    printf("Loading from dir\n");
+      //printf("Loading from dir\n");
       his = dir0->Get(sNameHis.Data());
     }
     else // file/his (this should be handled by the simple way)
     {
-//    printf("Loading from file\n");
+      //printf("Loading from file\n");
       his = file->Get(sNameHis.Data());
     }
   }
@@ -1045,12 +1048,12 @@ TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDeg
   return his;
 }
 
-void AdjustRangeGraph(TGraph* gr, Double_t dMargin)
+int AdjustRangeGraph(TGraph* gr, Double_t dMargin)
 {
   if(!gr)
   {
     printf("AdjustRangeGraph: Error: No graph!\n");
-    return;
+    return 1;
   }
   //printf("AdjustRangeGraph: Run\n");
   Int_t iNPoints = gr->GetN();
@@ -1075,6 +1078,7 @@ void AdjustRangeGraph(TGraph* gr, Double_t dMargin)
     gr->SetMinimum(dYMin - dHeight * dMargin);
     gr->SetMaximum(dYMax + dHeight * dMargin);
   }
+  return 0;
 }
 
 void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin)
@@ -1087,7 +1091,7 @@ void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin)
   if(his1->GetXaxis()->IsVariableBinSize()) // histogram was rebinned
   {
     //printf("Binning change for his1.\n");
-//    his2 = (TH1D*)his2->Rebin(his1->GetNbinsX(), Form("%s-2-Rebin", his2->GetName()), his1->GetXaxis()->GetXbins()->GetArray());
+    //his2 = (TH1D*)his2->Rebin(his1->GetNbinsX(), Form("%s-2-Rebin", his2->GetName()), his1->GetXaxis()->GetXbins()->GetArray());
     his2 = (TH1D*)his2->Rebin(his1->GetNbinsX(), "", his1->GetXaxis()->GetXbins()->GetArray());
   }
   //else
@@ -1098,7 +1102,7 @@ void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin)
     if(his2->GetXaxis()->IsVariableBinSize()) // histogram was rebinned
     {
       //printf("Binning change for his2.\n");
-//    his1 = (TH1D*)his1->Rebin(his2->GetNbinsX(), Form("%s-2-Rebin", his1->GetName()), his2->GetXaxis()->GetXbins()->GetArray());
+      //his1 = (TH1D*)his1->Rebin(his2->GetNbinsX(), Form("%s-2-Rebin", his1->GetName()), his2->GetXaxis()->GetXbins()->GetArray());
       his1 = (TH1D*)his1->Rebin(his2->GetNbinsX(), "", his2->GetXaxis()->GetXbins()->GetArray());
     }
     //else
