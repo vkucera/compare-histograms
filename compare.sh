@@ -40,6 +40,11 @@ pathList="$thisDir/lists"
 list="$5"
 list_file="$pathList/$list.txt"
 
+# name of normalisation histogram
+hisNorm=""
+#hisNorm="histonorm"
+#hisNorm="_Std/fh1EventCent"
+
 # customisation of paths
 # Use this option if you need to modify the histogram paths.
 custom_paths=0
@@ -58,7 +63,7 @@ mkdir -p "$dirOut" && \
 cd "$dirOut" || { echo "Error: Failed to make the output directory $dirOut."; exit 1; }
 
 if [ $custom_paths -ne 1 ]; then
-  root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
+  root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$hisNorm\",\"$hisNorm\",\"$tag1\",\"$tag2\")"
 else # path customisation block
   echo "Using customised histogram paths."
 
@@ -72,11 +77,6 @@ else # path customisation block
   branch2="$branch1"
   dir2="$dir1"
   #dir2="V0$branch2/V0histo$branch2"
-
-  # name of normalisation histogram
-  hisNorm=""
-  #hisNorm="histonorm"
-  #hisNorm="_Std/fh1EventCent"
 
   # path to normalisation histogram 1
   dirNorm1=""
