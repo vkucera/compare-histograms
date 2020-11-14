@@ -7,9 +7,9 @@
 
 Int_t iMyColors[] = {1, kBlue, 2, 8, kMagenta - 3, kOrange - 3, kRed + 2, 3}; // my personal colours
 const Int_t iNMyColors = sizeof(iMyColors) / sizeof(iMyColors[0]);
-Int_t iMyMarkersEmpty[] = {kOpenCircle, kOpenSquare, kOpenDiamond, kOpenCross, 30, kOpenTriangleUp, 32}; // my personal markers (empty)
+Int_t iMyMarkersEmpty[] = {kDot, kOpenCircle, kOpenSquare, kOpenDiamond, kOpenCross, 30, kOpenTriangleUp, 32}; // my personal markers (empty)
 const Int_t iNMyMarkersEmpty = sizeof(iMyMarkersEmpty) / sizeof(iMyMarkersEmpty[0]);
-Int_t iMyMarkersFull[] = {kFullCircle, kFullSquare, 33, 34, kFullStar, kFullTriangleUp, kFullTriangleDown}; // my personal markers (full)
+Int_t iMyMarkersFull[] = {kDot, kFullCircle, kFullSquare, 33, 34, kFullStar, kFullTriangleUp, kFullTriangleDown}; // my personal markers (full)
 const Int_t iNMyMarkersFull = sizeof(iMyMarkersFull) / sizeof(iMyMarkersFull[0]);
 Int_t lineStyles[5] = {1, 2, 3, 4, 5};
 const Int_t iNLineStyles = sizeof(lineStyles) / sizeof(lineStyles[0]);
