@@ -13,6 +13,8 @@ thisDir="$(dirname $(realpath $0))"
 script="$thisDir/compare.sh" # path to the bash script for running comparison between files
 pathList="$thisDir/lists" # path to the directory with lists
 
+[ "$ROOTSYS" ] || { echo "Error: This script needs ROOT."; exit 1; }
+
 [ -d "$pathList" ] || { echo "Creating list directory $pathList"; mkdir -p "$pathList" || { echo "Error: Failed to create list directory."; exit 1; } }
 
 # Load input specification.
