@@ -59,7 +59,7 @@ const Int_t iNAxesSkipProj = sizeof(iAxesSkipProj) / sizeof(iAxesSkipProj[0]);
 Int_t iAxesSkipSlice[] = {-1}; // list of axes to skip when making slices
 const Int_t iNAxesSkipSlice = sizeof(iAxesSkipSlice) / sizeof(iAxesSkipSlice[0]);
 
-int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sPath2, TString sPathNorm1 = "", TString sPathNorm2 = "", TString sTag1 = "1", TString sTag2 = "2")
+int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sPath2, TString sPathNorm1 = "", TString sPathNorm2 = "", TString sTag1 = "test", TString sTag2 = "reference")
 {
   gStyle->SetOptStat(0);
 
@@ -177,6 +177,7 @@ int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sP
   Bool_t bStop = kFALSE;
   while(!bStop && (!bListInput || (fileList1.good() && (bSameLists || fileList2.good()))))
   {
+    Printf("");
     if(bListInput)
     {
       fileList1 >> sPath1;
