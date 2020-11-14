@@ -101,10 +101,10 @@ base_real2="${base2}/${dir_real}/${dir_res2}"
 # array of file names
 files_real=( \
 "masshisto.root" \
-#"sideband_subtracted.root" \
-#"feeddown.root" \
-#"unfolding_results.root" \
-#"unfolding_closure.root" \
+"sideband_subtracted.root" \
+"feeddown.root" \
+"unfolding_results.root" \
+"unfolding_closure.root" \
 )
 
 # array of histogram list names for respective files
