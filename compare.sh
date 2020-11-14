@@ -20,11 +20,11 @@
 skipString="#"
 
 # input files
-file1="$(readlink -f "$1")"
-file2="$(readlink -f "$2")"
+file1="$(realpath "$1")"
+file2="$(realpath "$2")"
 
 # Check correct input files.
-[[ -z $file1 || -z $file2 ]] && { echo "Error: Empty file path!"; exit 1; }
+[[ -z $file1 || -z $file2 ]] && { echo "Error: Bad file path!"; exit 1; }
 [ ! -f $file1 ] && { echo "Error: File $file1 does not exist!"; exit 1; }
 [ ! -f $file2 ] && { echo "Error: File $file2 does not exist!"; exit 1; }
 
@@ -71,14 +71,17 @@ pathNorm2="$dirNorm2$hisNorm"
 
 #### EXECUTION ####
 
-date +%Y-%m-%d_%H-%M-%S
+now="date +%Y-%m-%d_%H-%M-%S"
+$now
 
 echo "Processing list $list"
 [ -f "$list_file" ] || { echo "Error: Cannot find list file $list_file"; exit 1; }
 
-mkdir -p "$list"
-cd "$list"
-rm -f Ratios.root
+dirOut="$list"
+rm -rf "$dirOut" && \
+mkdir -p "$dirOut" && \
+cd "$dirOut" || { echo "Failed to make the output directory $dirOut."; exit 1; }
+
 # temporary list files with modified paths
 list_tmp_1="${list}_tmp1.txt"
 list_tmp_2="${list}_tmp2.txt"
@@ -102,14 +105,14 @@ done
 
 # This is the new fast version. List files are passed to the macro and looping over histograms is done inside the main function while input/output files are opened only once.
 root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_tmp_1\",\"$list_tmp_2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
-rm $list_tmp_1 $list_tmp_2
+rm $list_tmp_1 $list_tmp_2 || { echo "Failed to delete temporary lists."; exit 1; }
 
 # Use the following lines if you want to use the list file directly for both files and you don't need to modify the histogram paths.
 #root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
 
 cd ..
 
-date +%Y-%m-%d_%H-%M-%S
+$now
 
 exit 0
 

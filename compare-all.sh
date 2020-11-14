@@ -37,19 +37,26 @@ function do_compare {
   done
 }
 
-date +%H:%M:%S
+now="date +%H:%M:%S"
+$now
+
 echo "Comparing real data directories:"
-mkdir -p "real"
-cd "real"
+dirOut="real"
+rm -rf "$dirOut" && \
+mkdir -p "$dirOut" && \
+cd "$dirOut" || { echo "Failed to make the output directory $dirOut."; exit 1; }
 do_compare $base_real1 $base_real2 files_real lists_real
 cd ..
 
 echo "Comparing MC data directories:"
-mkdir -p "sim"
-cd "sim"
+dirOut="sim"
+rm -rf "$dirOut" && \
+mkdir -p "$dirOut" && \
+cd "$dirOut" || { echo "Failed to make the output directory $dirOut."; exit 1; }
 do_compare $base_sim1 $base_sim2 files_sim lists_sim
 cd ..
-date +%H:%M:%S
+
+$now
 
 exit 0
 
