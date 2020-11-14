@@ -137,5 +137,5 @@ lists_sim=( \
 "masshisto_sim_${ana_name}_${ana_type}" \
 "effhisto_${ana_name}_${ana_type}" \
 "resphisto_${ana_name}_${ana_type}"
-"efficiencies" \
+"efficiencies_${ana_name}_${ana_type}" \
 )

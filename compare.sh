@@ -55,7 +55,7 @@ echo "Processing list $list"
 dirOut="$list"
 rm -rf "$dirOut" && \
 mkdir -p "$dirOut" && \
-cd "$dirOut" || { echo "Failed to make the output directory $dirOut."; exit 1; }
+cd "$dirOut" || { echo "Error: Failed to make the output directory $dirOut."; exit 1; }
 
 if [ $custom_paths -ne 1 ]; then
   root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
@@ -112,7 +112,7 @@ else # path customisation block
 
   # This is the new fast version. List files are passed to the macro and looping over histograms is done inside the main function while input/output files are opened only once.
   root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_tmp_1\",\"$list_tmp_2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
-  rm $list_tmp_1 $list_tmp_2 || { echo "Failed to delete temporary lists."; exit 1; }
+  rm $list_tmp_1 $list_tmp_2 || { echo "Error: Failed to delete temporary lists."; exit 1; }
 fi # end of path customisation block
 
 cd ..
