@@ -41,33 +41,8 @@ list="$5"
 list_file="$pathList/$list.txt"
 
 # customisation of paths
-
-# path to histogram 1
-branch1=""
-dir1=""
-#dir1="V0$branch1/V0histo$branch1"
-#dir1="Spectra/"
-
-# path to histogram 2
-branch2="$branch1"
-dir2="$dir1"
-#dir2="V0$branch2/V0histo$branch2"
-
-# name of normalisation histogram
-hisNorm=""
-#hisNorm="histonorm"
-#hisNorm="_Std/fh1EventCent"
-
-# path to normalisation histogram 1
-dirNorm1=""
-#dirNorm1="$dir1"
-
-# path to normalisation histogram 2
-dirNorm2="$dirNorm1"
-#dirNorm2="$dir2"
-
-pathNorm1="$dirNorm1$hisNorm"
-pathNorm2="$dirNorm2$hisNorm"
+# Use this option if you need to modify the histogram paths.
+custom_paths=0
 
 #### EXECUTION ####
 
@@ -82,33 +57,63 @@ rm -rf "$dirOut" && \
 mkdir -p "$dirOut" && \
 cd "$dirOut" || { echo "Failed to make the output directory $dirOut."; exit 1; }
 
-# temporary list files with modified paths
-list_tmp_1="${list}_tmp1.txt"
-list_tmp_2="${list}_tmp2.txt"
+if [ $custom_paths -ne 1 ]; then
+  root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
+else # path customisation block
+  echo "Using customised histogram paths."
 
-# The following loop allows to use the list file as a template and to modify the paths by appending dir1 and dir2.
-# histogram loop START
-for his in $(cat $list_file); do
-  if [ "${his:0:1}" = "$skipString" ]; then
-    echo "Skipping $his"
-    continue
-  fi
-  path1="$dir1$his"
-  path2="$dir2$his"
-  echo $path1 >> $list_tmp_1
-  echo $path2 >> $list_tmp_2
+  # path to histogram 1
+  branch1=""
+  dir1=""
+  #dir1="V0$branch1/V0histo$branch1"
+  #dir1="Spectra/"
 
-  # This is the old slow version. Only one histogram is processed per MakeRatio instance.
-  #root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
-done
-# histogram loop END
+  # path to histogram 2
+  branch2="$branch1"
+  dir2="$dir1"
+  #dir2="V0$branch2/V0histo$branch2"
 
-# This is the new fast version. List files are passed to the macro and looping over histograms is done inside the main function while input/output files are opened only once.
-root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_tmp_1\",\"$list_tmp_2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
-rm $list_tmp_1 $list_tmp_2 || { echo "Failed to delete temporary lists."; exit 1; }
+  # name of normalisation histogram
+  hisNorm=""
+  #hisNorm="histonorm"
+  #hisNorm="_Std/fh1EventCent"
 
-# Use the following lines if you want to use the list file directly for both files and you don't need to modify the histogram paths.
-#root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
+  # path to normalisation histogram 1
+  dirNorm1=""
+  #dirNorm1="$dir1"
+
+  # path to normalisation histogram 2
+  dirNorm2="$dirNorm1"
+  #dirNorm2="$dir2"
+
+  pathNorm1="$dirNorm1$hisNorm"
+  pathNorm2="$dirNorm2$hisNorm"
+
+  # temporary list files with modified paths
+  list_tmp_1="${list}_tmp1.txt"
+  list_tmp_2="${list}_tmp2.txt"
+
+  # The following loop allows to use the list file as a template and to modify the paths by appending dir1 and dir2.
+  # histogram loop START
+  for his in $(cat $list_file); do
+    if [ "${his:0:1}" = "$skipString" ]; then
+      echo "Skipping $his"
+      continue
+    fi
+    path1="$dir1$his"
+    path2="$dir2$his"
+    echo $path1 >> $list_tmp_1
+    echo $path2 >> $list_tmp_2
+
+    # This is the old slow version. Only one histogram is processed per MakeRatio instance.
+    #root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$path1\",\"$path2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
+  done
+  # histogram loop END
+
+  # This is the new fast version. List files are passed to the macro and looping over histograms is done inside the main function while input/output files are opened only once.
+  root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_tmp_1\",\"$list_tmp_2\",\"$pathNorm1\",\"$pathNorm2\",\"$tag1\",\"$tag2\")"
+  rm $list_tmp_1 $list_tmp_2 || { echo "Failed to delete temporary lists."; exit 1; }
+fi # end of path customisation block
 
 cd ..
 
