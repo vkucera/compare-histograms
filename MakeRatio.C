@@ -32,6 +32,7 @@
 
 #include "AuxROOTFunctions.h"
 
+int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sPath2, Double_t dNorm1 = -1, Double_t dNorm2 = -1, TString sTag1 = "test", TString sTag2 = "reference");
 TObject* GetHistogram(TFile* file, TString sPath, TString& sNameHis, Int_t& iDegree);
 int AdjustRangeGraph(TGraph* gr, Double_t dMargin = 0.1);
 void OptimizeBinningTwo(TH1D** phis1, TH1D** phis2, Double_t dNMin = 100);
@@ -72,23 +73,90 @@ int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sP
   // input
   TFile* file1 = 0;
   TFile* file2 = 0;
+  // normalisation histograms
+  TH1D* hisNorm1H1 = 0;
+  TH1D* hisNorm2H1 = 0;
+  // histogram dimensions: 1 - TH1, 2 - TH2, 3 - TH3, 4 - THnSparse
+  Int_t iDegreeHisNorm1 = 1;
+  Int_t iDegreeHisNorm2 = 1;
+
+  TString sNameHisNorm = "";
+
+  printf("Opening file 1 %s ", sNameFile1.Data());
+  file1 = new TFile(sNameFile1.Data(), "READ");
+  if(file1->IsZombie())
+  {
+    printf("failed (Error)\n");
+    return 1;
+  }
+  printf("OK\n");
+
+  printf("Opening file 2 %s ", sNameFile2.Data());
+  file2 = new TFile(sNameFile2.Data(), "READ");
+  if(file2->IsZombie())
+  {
+    printf("failed (Error)\n");
+    return 1;
+  }
+  printf("OK\n");
+
+  Double_t dNorm1 = -1;
+  Double_t dNorm2 = -1;
+  Int_t iBinNorm = 1;
+  if(sPathNorm1.Length())
+  {
+    hisNorm1H1 = (TH1D*)GetHistogram(file1, sPathNorm1, sNameHisNorm, iDegreeHisNorm1);
+    if(!hisNorm1H1)
+    {
+      //printf("Error: Failed to load norm histogram 1 %s\n", sNameHisNorm.Data());
+      return 1;
+    }
+    hisNorm2H1 = (TH1D*)GetHistogram(file2, sPathNorm2, sNameHisNorm, iDegreeHisNorm2);
+    if(!hisNorm2H1)
+    {
+      //printf("Error: Failed to load norm histogram 2 %s\n", sNameHisNorm.Data());
+      return 1;
+    }
+    if(iBinNorm == -1)
+    {
+      dNorm1 = hisNorm1H1->Integral();
+      dNorm2 = hisNorm2H1->Integral();
+    }
+    else
+    {
+      dNorm1 = hisNorm1H1->GetBinContent(iBinNorm);
+      dNorm2 = hisNorm2H1->GetBinContent(iBinNorm);
+    }
+  }
+  file1->Close();
+  file2->Close();
+  return MakeRatio(sNameFile1, sNameFile2, sPath1, sPath2, dNorm1, dNorm2, sTag1, sTag2);
+}
+
+int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sPath2, Double_t dNorm1, Double_t dNorm2, TString sTag1, TString sTag2)
+{
+  gStyle->SetOptStat(0);
+
+  if(!sNameFile1.Length() || !sNameFile2.Length() || !sPath1.Length() || !sPath2.Length())
+  {
+    printf("Error: Invalid input\n");
+    return 1;
+  }
+
+  // input
+  TFile* file1 = 0;
+  TFile* file2 = 0;
   TFile* fileOut = 0;
   ifstream fileList1; // txt file with a list of histogram paths
   ifstream fileList2; // txt file with a list of histogram paths
   TObject* his1 = 0;
   TObject* his2 = 0;
-  // normalisation histograms
-  TH1D* hisNorm1H1 = 0;
-  TH1D* hisNorm2H1 = 0;
   // histogram dimensions: 1 - TH1, 2 - TH2, 3 - TH3, 4 - THnSparse
   Int_t iDegreeHis1 = 1;
   Int_t iDegreeHis2 = 1;
-  Int_t iDegreeHisNorm1 = 1;
-  Int_t iDegreeHisNorm2 = 1;
 
   TString sNameFileOut = "Ratios.root";
   TString sNameHis = "";
-  TString sNameHisNorm = "";
   TString sSkipString = "#"; // string to mark histograms in a list to be skipped
 
   printf("Opening file 1 %s ", sNameFile1.Data());
@@ -119,35 +187,6 @@ int MakeRatio(TString sNameFile1, TString sNameFile2, TString sPath1, TString sP
       return 1;
     }
     printf("OK\n");
-  }
-
-  Double_t dNorm1 = -1;
-  Double_t dNorm2 = -1;
-  Int_t iBinNorm = 1;
-  if(sPathNorm1.Length())
-  {
-    hisNorm1H1 = (TH1D*)GetHistogram(file1, sPathNorm1, sNameHisNorm, iDegreeHisNorm1);
-    if(!hisNorm1H1)
-    {
-      //printf("Error: Failed to load norm histogram 1 %s\n", sNameHisNorm.Data());
-      return 1;
-    }
-    hisNorm2H1 = (TH1D*)GetHistogram(file2, sPathNorm2, sNameHisNorm, iDegreeHisNorm2);
-    if(!hisNorm2H1)
-    {
-      //printf("Error: Failed to load norm histogram 2 %s\n", sNameHisNorm.Data());
-      return 1;
-    }
-    if(iBinNorm == -1)
-    {
-      dNorm1 = hisNorm1H1->Integral();
-      dNorm2 = hisNorm2H1->Integral();
-    }
-    else
-    {
-      dNorm1 = hisNorm1H1->GetBinContent(iBinNorm);
-      dNorm2 = hisNorm2H1->GetBinContent(iBinNorm);
-    }
   }
 
   Bool_t bListInput = kFALSE; // input paths point to list files

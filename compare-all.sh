@@ -47,7 +47,7 @@ function do_compare {
       make_histogram_list "$dir1/$file" "$list_file" || exit 1
     fi
     log_file="${file/.root/}_$list.txt"
-    bash $script "$dir1/$file" "$dir2/$file" "$label1" "$label2" "$list" > "$log_file" 2>&1
+    bash $script "$dir1/$file" "$dir2/$file" "$label1" "$label2" "$list" $5 > "$log_file" 2>&1
     n_id=$(grep -c identical $log_file) # number of identical histograms
     n_tot=$(grep -v '#' "$list_file" | wc -l) # number of histograms that should be processed
     echo "Identical histograms: $n_id/$n_tot"
@@ -59,20 +59,24 @@ function do_compare {
 now="date +%H:%M:%S"
 $now
 
+argsNorm="$his_norm"
+
 echo -e "\nComparing real data directories:"
+[ "$his_norm" ] || argsNorm="$n_ev_real1 $n_ev_real2"
 dirOut="real"
 rm -rf "$dirOut" && \
 mkdir -p "$dirOut" && \
 cd "$dirOut" || { echo "Error: Failed to make the output directory $dirOut."; exit 1; }
-do_compare $base_real1 $base_real2 files_real lists_real
+do_compare $base_real1 $base_real2 files_real lists_real "$argsNorm"
 cd ..
 
 echo -e "\nComparing MC data directories:"
+[ "$his_norm" ] || argsNorm="$n_ev_sim1 $n_ev_sim2"
 dirOut="sim"
 rm -rf "$dirOut" && \
 mkdir -p "$dirOut" && \
 cd "$dirOut" || { echo "Error: Failed to make the output directory $dirOut."; exit 1; }
-do_compare $base_sim1 $base_sim2 files_sim lists_sim
+do_compare $base_sim1 $base_sim2 files_sim lists_sim "$argsNorm"
 cd ..
 
 $now

@@ -15,6 +15,9 @@
 # $3 tag 1
 # $4 tag 2
 # $5 histogram list name
+# [$6] normalisation histogram name
+# [$6] number of events 1
+# [$7] number of events 2
 
 # comment character for skipping histograms
 skipString="#"
@@ -42,8 +45,11 @@ list_file="$pathList/$list.txt"
 
 # name of normalisation histogram
 hisNorm=""
-#hisNorm="histonorm"
-#hisNorm="_Std/fh1EventCent"
+[ $# -eq 6 ] && hisNorm="$6"
+# number of events for normalisation when hisNorm is not specified
+nNorm1=-1
+nNorm2=-1
+[ $# -eq 7 ] && { nNorm1="$6"; nNorm2="$7"; }
 
 # customisation of paths
 # Use this option if you need to modify the histogram paths.
@@ -63,7 +69,11 @@ mkdir -p "$dirOut" && \
 cd "$dirOut" || { echo "Error: Failed to make the output directory $dirOut."; exit 1; }
 
 if [ $custom_paths -ne 1 ]; then
-  root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$hisNorm\",\"$hisNorm\",\"$tag1\",\"$tag2\")"
+  if [ "$hisNorm" ]; then
+    root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",\"$hisNorm\",\"$hisNorm\",\"$tag1\",\"$tag2\")"
+  else
+    root -b -q "$thisDir/MakeRatio.C(\"$file1\",\"$file2\",\"$list_file\",\"$list_file\",$nNorm1,$nNorm2,\"$tag1\",\"$tag2\")"
+  fi
 else # path customisation block
   echo "Using customised histogram paths."
 

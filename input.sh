@@ -9,9 +9,7 @@
 
 # Input specification for compare-all.sh
 
-# analysis strings
-ana_name="D0pp" # LcpK0spp, D0pp_FF, D0pp_zg
-ana_type="jet_zg" # MBjetvspt, jet_zg
+####################################################################################################
 
 # directories with results
 
@@ -70,32 +68,39 @@ res_0824_D0_deltaR="/data/Derived_testResults/Jets/D0kAnywithJets/vAN-20200824_R
 res_0304_Lc_deltaR="/data/Derived_testResults/Jets/Lc/vAN-20200304_ROOT6-1/ff/default/default"
 res_0824_Lc_deltaR="/data/Derived_testResults/Jets/Lc/vAN-20200824_ROOT6-1/ff/default/default"
 
-########################################################################################################################
+####################################################################################################
+
+# analysis strings
+ana_name="D0pp" # LcpK0spp, D0pp
+ana_type="jet_zg" # MBjetvspt, jet_zg
 
 # main result directories (Select from the list above.)
-base1=$res_0304_D0_zg_default_now # test
-base2=$res_0304_D0_zg_default_prel # reference
+base1="$res_0304_D0_zg_default_now" # test
+base2="$res_0304_D0_zg_default_prel" # reference
 
 # labels to identify histograms on the plots
-label1="test" # test
-label2="reference" # reference
-
-# names of data type subdirectories
-dir_real="pp_data" # real data
-dir_sim1="pp_mc_prodD2H" # MC data 1, pp_mc_prodLcpK0s or pp_mc_prodD2H
-dir_sim2="pp_mc_prodD2H" # MC data 2, pp_mc_prodLcpK0s or pp_mc_prodD2H
+label1="D0 now" # test
+label2="D0 prel" # reference
 
 # names of result subdirectories
 #dir_res="results${ana_type}"
 dir_res1="resultsMBjetvspt"
 dir_res2="resultsMBjetvspt"
 
+# name of histogram to get the number of events for normalisation
+his_norm=""
+#his_norm="histonorm"
+#his_norm="_Std/fh1EventCent"
+
+####################################################################################################
+
 #### real data ####
 
-# path to the first directory
-base_real1="${base1}/${dir_real}/${dir_res1}"
+# names of data type subdirectories
+dir_real="pp_data" # real data
 
-# path to the second directory
+# full paths to the directories
+base_real1="${base1}/${dir_real}/${dir_res1}"
 base_real2="${base2}/${dir_real}/${dir_res2}"
 
 # array of file names
@@ -116,12 +121,20 @@ lists_real=( \
 "unfolding_closure_${ana_name}_${ana_type}" \
 )
 
+# numbers of events for normalisation when his_norm is not specified
+n_ev_real1=-1
+n_ev_real2=-1
+
+####################################################################################################
+
 #### MC data ####
 
-# path to the first directory
-base_sim1="${base1}/${dir_sim1}/${dir_res1}"
+# names of data type subdirectories
+dir_sim1="pp_mc_prodD2H" # MC data 1, pp_mc_prodLcpK0s or pp_mc_prodD2H
+dir_sim2="pp_mc_prodD2H" # MC data 2, pp_mc_prodLcpK0s or pp_mc_prodD2H
 
-# path to the second directory
+# full paths to the directories
+base_sim1="${base1}/${dir_sim1}/${dir_res1}"
 base_sim2="${base2}/${dir_sim2}/${dir_res2}"
 
 # array of file names
@@ -139,3 +152,9 @@ lists_sim=( \
 "resphisto_${ana_name}_${ana_type}"
 "efficiencies_${ana_name}_${ana_type}" \
 )
+
+# numbers of events for normalisation when his_norm is not specified
+n_ev_sim1=-1
+n_ev_sim2=-1
+
+####################################################################################################
